@@ -1,6 +1,7 @@
 package com.lightphone.tide.server
 
 import com.lightphone.tide.protocol.AuthState
+import com.lightphone.tide.protocol.CollectionRequest
 import com.lightphone.tide.protocol.TideRemoteMethod
 import com.thelightphone.sdk.shared.LightResult
 import kotlin.test.Test
@@ -42,5 +43,15 @@ class TideServiceMethodsTest {
 
         val failure = assertIs<LightResult.Error>(result)
         assertTrue(failure.extra!!.contains("unknown Tide method"))
+    }
+
+    @Test
+    fun collectionWithoutCatalogReturnsError() {
+        val result = TideServiceMethods.dispatch(
+            TideRemoteMethod.GetCollection.id,
+            TideRemoteMethod.GetCollection.encodeRequest(CollectionRequest()),
+        )
+
+        assertIs<LightResult.Error>(result)
     }
 }

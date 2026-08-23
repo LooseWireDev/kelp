@@ -17,9 +17,17 @@ sealed interface TideRemoteMethod<TRequest, TResponse> : LightRemoteMethod<TRequ
         override val requestSerializer = serializer<Unit>()
         override val responseSerializer = serializer<ServerActivity>()
     }
+
+    /** Fetch a page of the authenticated user's collection. */
+    object GetCollection : TideRemoteMethod<CollectionRequest, Page<ReleaseSummary>> {
+        override val id = "com.lightphone.tide.catalog.collection.v1"
+        override val requestSerializer = serializer<CollectionRequest>()
+        override val responseSerializer = serializer<Page<ReleaseSummary>>()
+    }
 }
 
 val tideRemoteMethods: Map<String, TideRemoteMethod<*, *>> = listOf(
     TideRemoteMethod.GetAuthSnapshot,
     TideRemoteMethod.GetLoginActivity,
+    TideRemoteMethod.GetCollection,
 ).associateBy { it.id }

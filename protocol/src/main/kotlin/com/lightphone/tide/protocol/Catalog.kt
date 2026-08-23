@@ -25,4 +25,9 @@ data class Page<T>(
 ) {
     val hasMore: Boolean
         get() = nextCursor != null
-}
+    }
+
+@Serializable
+data class CollectionRequest(
+    val cursor: String? = null,
+)

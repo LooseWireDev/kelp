@@ -97,6 +97,17 @@ class HomeScreen(sealedActivity: SealedLightActivity) : LightScreen<Unit, HomeVi
                             ),
                         ),
                     )
+                } else if (state?.state == AuthState.Authenticated) {
+                    LightBottomBar(
+                        items = listOf(
+                            LightBarButton.Text(
+                                text = "MY COLLECTION",
+                                onClick = {
+                                    navigateTo(screenFactory = { CollectionScreen(it) })
+                                },
+                            ),
+                        ),
+                    )
                 }
             }
         }

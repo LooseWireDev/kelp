@@ -52,6 +52,8 @@ object TideRuntime {
 
     fun currentAuthSnapshot(): AuthSnapshot = synchronized(snapshotLock) { authSnapshot }
 
+    fun tidalAuth(): TidalAuth? = tidalAuth
+
     fun loginUri(): Uri? {
         val auth = tidalAuth?.auth ?: return null
         return runCatching {

@@ -5,6 +5,7 @@ import kotlinx.serialization.serializer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 
 class CatalogContractTest {
     @Test
@@ -40,5 +41,23 @@ class CatalogContractTest {
 
         assertEquals(page, lightJson.decodeFromString(pageSerializer, lightJson.encodeToString(pageSerializer, page)))
         assertFalse(page.copy(nextCursor = null).hasMore)
+    }
+
+    @Test
+    fun collectionRequestRoundTripsWithNullCursor() {
+        val request = CollectionRequest(cursor = null)
+        val encoded = lightJson.encodeToString(CollectionRequest.serializer(), request)
+        val decoded = lightJson.decodeFromString(CollectionRequest.serializer(), encoded)
+        assertEquals(request, decoded)
+        assertNull(decoded.cursor)
+    }
+
+    @Test
+    fun collectionRequestRoundTripsWithCursor() {
+        val request = CollectionRequest(cursor = "opaque-page-token")
+        val encoded = lightJson.encodeToString(CollectionRequest.serializer(), request)
+        val decoded = lightJson.decodeFromString(CollectionRequest.serializer(), encoded)
+        assertEquals(request, decoded)
+        assertEquals("opaque-page-token", decoded.cursor)
     }
 }

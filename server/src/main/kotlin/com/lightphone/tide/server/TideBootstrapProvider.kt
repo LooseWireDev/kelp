@@ -26,6 +26,9 @@ class TideBootstrapProvider : ContentProvider() {
         }
         TideServiceMethods.initialize(appContext)
         TideRuntime.initialize(appContext)
+        TideRuntime.tidalAuth()?.credentialsProvider?.let { provider ->
+            TideServiceMethods.initializeCatalog(TidalCatalog(provider))
+        }
         return true
     }
 
