@@ -1,0 +1,6 @@
+# TIDAL SDK configuration (do not commit real credentials)
+tidal.clientid=
+tidal.clientsecret=
+# Space-separated, matching the scopes selected in the TIDAL developer portal.
+tidal.clientscopes=
+tidal.clientredirecturi=tide://auth

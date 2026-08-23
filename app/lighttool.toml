@@ -1,0 +1,8 @@
+[tool]
+id = "com.lightphone.tide"
+label = "Tide"
+versionCode = 1
+versionName = "0.1.0"
+permissions = ["android.permission.INTERNET"]
+serverPackage = "com.lightphone.tide"
+orientation = "portrait"

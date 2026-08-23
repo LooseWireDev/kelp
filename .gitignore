@@ -1,0 +1,21 @@
+# Android
+.gradle/
+.kotlin/
+**/build/
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+
+# Native builds and captures
+.externalNativeBuild/
+.cxx/
+captures/
+
+# OS metadata
+.DS_Store
+**/.DS_Store
