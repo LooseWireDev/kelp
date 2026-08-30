@@ -23,7 +23,7 @@ jobs:
           path: light-sdk
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -81,7 +81,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          title: Tide ${{ github.ref_name }}
+          name: Tide ${{ github.ref_name }}
           body_path: tide/dist/release-notes.txt
           files: |
             tide/dist/*.apk
