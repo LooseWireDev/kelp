@@ -23,7 +23,7 @@ import okhttp3.Request
  * registered developer app only resolve 30-second previews. This flow signs in
  * with TIDAL's first-party Android client id so the user's subscription
  * applies to playback resolution. It lives next to — and does not replace —
- * the developer-app auth3 login in [TideRuntime], which the catalog (v2 Open
+ * the developer-app auth3 login in [KelpRuntime], which the catalog (v2 Open
  * API) still requires.
  *
  * Tokens live in a private SharedPreferences file. First-party PKCE carries no

@@ -22,7 +22,7 @@ import androidx.lifecycle.viewModelScope
 import com.loosewire.kelp.protocol.Page
 import com.loosewire.kelp.protocol.ReleaseSummary
 import com.loosewire.kelp.protocol.ReleaseType
-import com.loosewire.kelp.protocol.TideError
+import com.loosewire.kelp.protocol.KelpError
 import com.thelightphone.sdk.LightScreen
 import com.thelightphone.sdk.LightViewModel
 import com.thelightphone.sdk.SealedLightActivity
@@ -44,7 +44,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class CollectionViewModel(
-    private val tideClient: TideClient = BinderTideClient,
+    private val kelpClient: KelpClient = BinderTideClient,
 ) : LightViewModel<Unit>() {
 
     sealed interface UiState {
@@ -52,9 +52,9 @@ class CollectionViewModel(
         data class Loaded(
             val page: Page<ReleaseSummary>,
             val loadingMore: Boolean,
-            val loadMoreError: TideError? = null,
+            val loadMoreError: KelpError? = null,
         ) : UiState
-        data class Error(val error: TideError) : UiState
+        data class Error(val error: KelpError) : UiState
     }
 
     private val _state = MutableStateFlow<UiState>(UiState.Loading)
@@ -78,14 +78,14 @@ class CollectionViewModel(
         requestJob?.cancel()
         _state.value = UiState.Loading
         requestJob = viewModelScope.launch {
-            when (val result = tideClient.collection()) {
-                is TideClientResult.Success -> if (generation == requestGeneration) {
+            when (val result = kelpClient.collection()) {
+                is KelpClientResult.Success -> if (generation == requestGeneration) {
                     _state.value = UiState.Loaded(
                         result.data.withDistinctItems(),
                         loadingMore = false,
                     )
                 }
-                is TideClientResult.Failure -> if (generation == requestGeneration) {
+                is KelpClientResult.Failure -> if (generation == requestGeneration) {
                     _state.value = UiState.Error(result.error)
                 }
             }
@@ -100,8 +100,8 @@ class CollectionViewModel(
         requestJob?.cancel()
         _state.value = current.copy(loadingMore = true, loadMoreError = null)
         requestJob = viewModelScope.launch {
-            when (val result = tideClient.collection(current.page.nextCursor)) {
-                is TideClientResult.Success -> if (generation == requestGeneration) {
+            when (val result = kelpClient.collection(current.page.nextCursor)) {
+                is KelpClientResult.Success -> if (generation == requestGeneration) {
                     _state.value = UiState.Loaded(
                         page = Page(
                             items = (current.page.items + result.data.items).distinctBy { it.id },
@@ -110,7 +110,7 @@ class CollectionViewModel(
                         loadingMore = false,
                     )
                 }
-                is TideClientResult.Failure -> if (generation == requestGeneration) {
+                is KelpClientResult.Failure -> if (generation == requestGeneration) {
                     _state.value = current.copy(
                         loadingMore = false,
                         loadMoreError = result.error,

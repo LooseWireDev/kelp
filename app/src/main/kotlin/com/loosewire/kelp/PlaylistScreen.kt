@@ -16,7 +16,7 @@ import com.loosewire.kelp.protocol.PlaylistDetail
 import com.loosewire.kelp.protocol.PlaylistSummary
 import com.loosewire.kelp.protocol.StartPlaybackRequest
 import com.loosewire.kelp.protocol.TrackSummary
-import com.loosewire.kelp.protocol.TideError
+import com.loosewire.kelp.protocol.KelpError
 import com.thelightphone.sdk.LightScreen
 import com.thelightphone.sdk.LightViewModel
 import com.thelightphone.sdk.SealedLightActivity
@@ -42,13 +42,13 @@ import kotlinx.coroutines.launch
 
 class PlaylistViewModel(
     private val playlist: PlaylistSummary,
-    private val tideClient: TideClient = BinderTideClient,
-    preferences: TidePreferences? = null,
+    private val kelpClient: KelpClient = BinderTideClient,
+    preferences: KelpPreferences? = null,
 ) : LightViewModel<Unit>() {
     sealed interface UiState {
         data object Loading : UiState
         data class Loaded(val detail: PlaylistDetail) : UiState
-        data class Error(val error: TideError) : UiState
+        data class Error(val error: KelpError) : UiState
     }
 
     private val _state = MutableStateFlow<UiState>(UiState.Loading)
@@ -58,7 +58,7 @@ class PlaylistViewModel(
     private val playbackPreferences = preferences?.playback?.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = TidePlaybackPreferences(),
+        initialValue = KelpPlaybackPreferences(),
     )
 
     override fun onScreenShow(screen: SimpleLightScreen<Unit>) {
@@ -70,19 +70,19 @@ class PlaylistViewModel(
         loadJob?.cancel()
         _state.value = UiState.Loading
         loadJob = viewModelScope.launch {
-            when (val result = tideClient.playlistDetail(playlist)) {
-                is TideClientResult.Success -> {
+            when (val result = kelpClient.playlistDetail(playlist)) {
+                is KelpClientResult.Success -> {
                     loaded = true
                     _state.value = UiState.Loaded(result.data)
                 }
-                is TideClientResult.Failure -> _state.value = UiState.Error(result.error)
+                is KelpClientResult.Failure -> _state.value = UiState.Error(result.error)
             }
         }
     }
 
     fun play(tracks: List<TrackSummary>, index: Int, onStarted: () -> Unit) {
         viewModelScope.launch {
-            val result = tideClient.startPlayback(
+            val result = kelpClient.startPlayback(
                 StartPlaybackRequest(
                     tracks = tracks,
                     startIndex = index,
@@ -90,7 +90,7 @@ class PlaylistViewModel(
                     continuousPlayback = playbackPreferences?.value?.continuousPlayback ?: true,
                 ),
             )
-            if (result is TideClientResult.Success) onStarted()
+            if (result is KelpClientResult.Success) onStarted()
         }
     }
 }

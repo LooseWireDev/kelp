@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 
-enum class TideAudioQuality(
+enum class KelpAudioQuality(
     val label: String,
     val detail: String,
 ) {
@@ -21,24 +21,24 @@ enum class TideAudioQuality(
     HiResLossless("Max", "Hi-res lossless"),
     ;
 
-    fun next(): TideAudioQuality = entries[(ordinal + 1) % entries.size]
+    fun next(): KelpAudioQuality = entries[(ordinal + 1) % entries.size]
 }
 
-data class TidePlaybackPreferences(
-    val wifiQuality: TideAudioQuality = TideAudioQuality.Lossless,
-    val mobileQuality: TideAudioQuality = TideAudioQuality.High,
-    val downloadQuality: TideAudioQuality = TideAudioQuality.Lossless,
+data class KelpPlaybackPreferences(
+    val wifiQuality: KelpAudioQuality = KelpAudioQuality.Lossless,
+    val mobileQuality: KelpAudioQuality = KelpAudioQuality.High,
+    val downloadQuality: KelpAudioQuality = KelpAudioQuality.Lossless,
     val normalizeVolume: Boolean = true,
     val allowExplicitContent: Boolean = true,
     val continuousPlayback: Boolean = true,
 )
 
-interface TidePreferences {
-    val playback: Flow<TidePlaybackPreferences>
+interface KelpPreferences {
+    val playback: Flow<KelpPlaybackPreferences>
 
-    suspend fun setWifiQuality(quality: TideAudioQuality)
-    suspend fun setMobileQuality(quality: TideAudioQuality)
-    suspend fun setDownloadQuality(quality: TideAudioQuality)
+    suspend fun setWifiQuality(quality: KelpAudioQuality)
+    suspend fun setMobileQuality(quality: KelpAudioQuality)
+    suspend fun setDownloadQuality(quality: KelpAudioQuality)
     suspend fun setNormalizeVolume(enabled: Boolean)
     suspend fun setAllowExplicitContent(enabled: Boolean)
     suspend fun setContinuousPlayback(enabled: Boolean)
@@ -46,31 +46,31 @@ interface TidePreferences {
 
 class DataStoreTidePreferences(
     private val dataStore: DataStore<Preferences>,
-) : TidePreferences {
-    override val playback: Flow<TidePlaybackPreferences> = dataStore.data
+) : KelpPreferences {
+    override val playback: Flow<KelpPlaybackPreferences> = dataStore.data
         .catch { error ->
             if (error is IOException) emit(emptyPreferences()) else throw error
         }
         .map { preferences ->
-            TidePlaybackPreferences(
-                wifiQuality = preferences[WifiQualityKey].asQualityOr(TideAudioQuality.Lossless),
-                mobileQuality = preferences[MobileQualityKey].asQualityOr(TideAudioQuality.High),
-                downloadQuality = preferences[DownloadQualityKey].asQualityOr(TideAudioQuality.Lossless),
+            KelpPlaybackPreferences(
+                wifiQuality = preferences[WifiQualityKey].asQualityOr(KelpAudioQuality.Lossless),
+                mobileQuality = preferences[MobileQualityKey].asQualityOr(KelpAudioQuality.High),
+                downloadQuality = preferences[DownloadQualityKey].asQualityOr(KelpAudioQuality.Lossless),
                 normalizeVolume = preferences[NormalizeVolumeKey] ?: true,
                 allowExplicitContent = preferences[AllowExplicitContentKey] ?: true,
                 continuousPlayback = preferences[ContinuousPlaybackKey] ?: true,
             )
         }
 
-    override suspend fun setWifiQuality(quality: TideAudioQuality) {
+    override suspend fun setWifiQuality(quality: KelpAudioQuality) {
         dataStore.edit { it[WifiQualityKey] = quality.name }
     }
 
-    override suspend fun setMobileQuality(quality: TideAudioQuality) {
+    override suspend fun setMobileQuality(quality: KelpAudioQuality) {
         dataStore.edit { it[MobileQualityKey] = quality.name }
     }
 
-    override suspend fun setDownloadQuality(quality: TideAudioQuality) {
+    override suspend fun setDownloadQuality(quality: KelpAudioQuality) {
         dataStore.edit { it[DownloadQualityKey] = quality.name }
     }
 
@@ -86,8 +86,8 @@ class DataStoreTidePreferences(
         dataStore.edit { it[ContinuousPlaybackKey] = enabled }
     }
 
-    private fun String?.asQualityOr(fallback: TideAudioQuality): TideAudioQuality =
-        TideAudioQuality.entries.firstOrNull { it.name == this } ?: fallback
+    private fun String?.asQualityOr(fallback: KelpAudioQuality): KelpAudioQuality =
+        KelpAudioQuality.entries.firstOrNull { it.name == this } ?: fallback
 
     private companion object {
         val WifiQualityKey = stringPreferencesKey("playback_wifi_quality")

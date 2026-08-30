@@ -10,9 +10,9 @@ class AuthContractTest {
     fun authSnapshotRoundTripsThroughMethod() {
         val snapshot = AuthSnapshot(AuthState.Authenticated)
 
-        val encoded = TideRemoteMethod.GetAuthSnapshot.encodeResponse(snapshot)
+        val encoded = KelpRemoteMethod.GetAuthSnapshot.encodeResponse(snapshot)
 
-        assertEquals(snapshot, TideRemoteMethod.GetAuthSnapshot.decodeResponse(encoded))
+        assertEquals(snapshot, KelpRemoteMethod.GetAuthSnapshot.decodeResponse(encoded))
     }
 
     @Test

@@ -21,7 +21,7 @@ import com.loosewire.kelp.protocol.ArtistReleaseSection
 import com.loosewire.kelp.protocol.ArtistSummary
 import com.loosewire.kelp.protocol.ReleaseSummary
 import com.loosewire.kelp.protocol.StartPlaybackRequest
-import com.loosewire.kelp.protocol.TideError
+import com.loosewire.kelp.protocol.KelpError
 import com.loosewire.kelp.protocol.TrackSummary
 import com.thelightphone.sdk.LightScreen
 import com.thelightphone.sdk.LightViewModel
@@ -120,8 +120,8 @@ class ArtistScreen(
 private class ArtistSectionViewModel(
     private val artist: ArtistSummary,
     private val section: ArtistSection,
-    private val tideClient: TideClient = BinderTideClient,
-    preferences: TidePreferences? = null,
+    private val kelpClient: KelpClient = BinderTideClient,
+    preferences: KelpPreferences? = null,
 ) : LightViewModel<Unit>() {
     data class UiState(
         val releases: List<ReleaseSummary> = emptyList(),
@@ -130,8 +130,8 @@ private class ArtistSectionViewModel(
         val loading: Boolean = true,
         val loadingMore: Boolean = false,
         val loaded: Boolean = false,
-        val error: TideError? = null,
-        val loadMoreError: TideError? = null,
+        val error: KelpError? = null,
+        val loadMoreError: KelpError? = null,
     )
 
     private val _state = MutableStateFlow(UiState())
@@ -140,7 +140,7 @@ private class ArtistSectionViewModel(
     private val playbackPreferences = preferences?.playback?.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = TidePlaybackPreferences(),
+        initialValue = KelpPlaybackPreferences(),
     )
 
     override fun onScreenShow(screen: SimpleLightScreen<Unit>) {
@@ -167,31 +167,31 @@ private class ArtistSectionViewModel(
         val before = _state.value
         val releaseSection = section.releaseSection
         if (releaseSection != null) {
-            when (val result = tideClient.artistReleases(artist, releaseSection, cursor)) {
-                is TideClientResult.Success -> _state.value = UiState(
+            when (val result = kelpClient.artistReleases(artist, releaseSection, cursor)) {
+                is KelpClientResult.Success -> _state.value = UiState(
                     releases = ((if (append) before.releases else emptyList()) + result.data.items)
                         .distinctBy(ReleaseSummary::id),
                     nextCursor = result.data.nextCursor,
                     loading = false,
                     loaded = true,
                 )
-                is TideClientResult.Failure -> pageFailure(before, result.error, append)
+                is KelpClientResult.Failure -> pageFailure(before, result.error, append)
             }
         } else {
-            when (val result = tideClient.artistTracks(artist, cursor)) {
-                is TideClientResult.Success -> _state.value = UiState(
+            when (val result = kelpClient.artistTracks(artist, cursor)) {
+                is KelpClientResult.Success -> _state.value = UiState(
                     tracks = ((if (append) before.tracks else emptyList()) + result.data.items)
                         .distinctBy(TrackSummary::id),
                     nextCursor = result.data.nextCursor,
                     loading = false,
                     loaded = true,
                 )
-                is TideClientResult.Failure -> pageFailure(before, result.error, append)
+                is KelpClientResult.Failure -> pageFailure(before, result.error, append)
             }
         }
     }
 
-    private fun pageFailure(before: UiState, error: TideError, append: Boolean) {
+    private fun pageFailure(before: UiState, error: KelpError, append: Boolean) {
         _state.value = if (append) {
             before.copy(loadingMore = false, loadMoreError = error)
         } else {
@@ -203,7 +203,7 @@ private class ArtistSectionViewModel(
         val tracks = _state.value.tracks
         if (index !in tracks.indices) return
         viewModelScope.launch {
-            val result = tideClient.startPlayback(
+            val result = kelpClient.startPlayback(
                 StartPlaybackRequest(
                     tracks = tracks,
                     startIndex = index,
@@ -211,7 +211,7 @@ private class ArtistSectionViewModel(
                     continuousPlayback = playbackPreferences?.value?.continuousPlayback ?: true,
                 ),
             )
-            if (result is TideClientResult.Success) onStarted()
+            if (result is KelpClientResult.Success) onStarted()
         }
     }
 }

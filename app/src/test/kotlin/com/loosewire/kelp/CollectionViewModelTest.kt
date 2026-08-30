@@ -5,8 +5,8 @@ import com.loosewire.kelp.protocol.Page
 import com.loosewire.kelp.protocol.ReleaseSummary
 import com.loosewire.kelp.protocol.ReleaseType
 import com.loosewire.kelp.protocol.ServerActivity
-import com.loosewire.kelp.protocol.TideError
-import com.loosewire.kelp.protocol.TideErrorCategory
+import com.loosewire.kelp.protocol.KelpError
+import com.loosewire.kelp.protocol.KelpErrorCategory
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -67,8 +67,8 @@ class CollectionViewModelTest {
         runCurrent()
         viewModel.loadFirstPage()
         runCurrent()
-        pendingMore.complete(TideClientResult.Success(page(release("stale"))))
-        pendingRefresh.complete(TideClientResult.Success(page(release("fresh"))))
+        pendingMore.complete(KelpClientResult.Success(page(release("stale"))))
+        pendingRefresh.complete(KelpClientResult.Success(page(release("fresh"))))
         runCurrent()
 
         assertEquals(listOf("fresh"), viewModel.loaded().page.items.map { it.id })
@@ -76,10 +76,10 @@ class CollectionViewModelTest {
 
     @Test
     fun loadMoreFailureKeepsExistingItemsAndCanRetry() = runTest(dispatcher) {
-        val error = TideError(TideErrorCategory.Network, "Could not reach TIDAL.")
+        val error = KelpError(KelpErrorCategory.Network, "Could not reach TIDAL.")
         val client = FakeTideClient().apply {
             enqueueSuccess(page(release("1"), nextCursor = "next"))
-            enqueue(TideClientResult.Failure(error))
+            enqueue(KelpClientResult.Failure(error))
         }
         val viewModel = CollectionViewModel(client)
         viewModel.loadFirstPage()
@@ -126,31 +126,31 @@ class CollectionViewModelTest {
     )
 }
 
-private class FakeTideClient : TideClient {
-    private val collectionResults = ArrayDeque<suspend () -> TideClientResult<Page<ReleaseSummary>>>()
+private class FakeTideClient : KelpClient {
+    private val collectionResults = ArrayDeque<suspend () -> KelpClientResult<Page<ReleaseSummary>>>()
     var collectionCalls = 0
         private set
 
-    fun enqueue(result: TideClientResult<Page<ReleaseSummary>>) {
+    fun enqueue(result: KelpClientResult<Page<ReleaseSummary>>) {
         collectionResults.addLast { result }
     }
 
     fun enqueueSuccess(page: Page<ReleaseSummary>) {
-        enqueue(TideClientResult.Success(page))
+        enqueue(KelpClientResult.Success(page))
     }
 
-    fun enqueuePending(): CompletableDeferred<TideClientResult<Page<ReleaseSummary>>> {
-        val result = CompletableDeferred<TideClientResult<Page<ReleaseSummary>>>()
+    fun enqueuePending(): CompletableDeferred<KelpClientResult<Page<ReleaseSummary>>> {
+        val result = CompletableDeferred<KelpClientResult<Page<ReleaseSummary>>>()
         collectionResults.addLast { withContext(NonCancellable) { result.await() } }
         return result
     }
 
-    override suspend fun collection(cursor: String?): TideClientResult<Page<ReleaseSummary>> {
+    override suspend fun collection(cursor: String?): KelpClientResult<Page<ReleaseSummary>> {
         collectionCalls += 1
         return assertNotNull(collectionResults.removeFirstOrNull()).invoke()
     }
 
-    override suspend fun authSnapshot(): TideClientResult<AuthSnapshot> = error("Not used")
+    override suspend fun authSnapshot(): KelpClientResult<AuthSnapshot> = error("Not used")
 
-    override suspend fun loginActivity(): TideClientResult<ServerActivity> = error("Not used")
+    override suspend fun loginActivity(): KelpClientResult<ServerActivity> = error("Not used")
 }

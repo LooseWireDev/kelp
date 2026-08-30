@@ -16,9 +16,9 @@ import com.loosewire.kelp.protocol.ReleaseSummary
 import com.loosewire.kelp.protocol.SearchRequest
 import com.loosewire.kelp.protocol.SearchResults
 import com.loosewire.kelp.protocol.TrackSummary
-import com.loosewire.kelp.protocol.TideError
-import com.loosewire.kelp.protocol.TideErrorCategory
-import com.loosewire.kelp.protocol.TideRemoteMethod
+import com.loosewire.kelp.protocol.KelpError
+import com.loosewire.kelp.protocol.KelpErrorCategory
+import com.loosewire.kelp.protocol.KelpRemoteMethod
 import com.thelightphone.sdk.shared.LightResult
 import java.io.IOException
 import kotlinx.coroutines.delay
@@ -28,20 +28,20 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
-class TideServiceMethodsTest {
+class KelpServiceMethodsTest {
     @AfterTest
     fun resetCatalog() {
-        TideServiceMethods.initializeCatalog(null)
-        TideServiceMethods.setCollectionTimeoutForTests(10_000L)
+        KelpServiceMethods.initializeCatalog(null)
+        KelpServiceMethods.setCollectionTimeoutForTests(10_000L)
     }
 
     @Test
     fun authSnapshotUsesProtocolContract() {
-        val result = TideServiceMethods.dispatch(
-            TideRemoteMethod.GetAuthSnapshot.id,
-            TideRemoteMethod.GetAuthSnapshot.encodeRequest(Unit),
+        val result = KelpServiceMethods.dispatch(
+            KelpRemoteMethod.GetAuthSnapshot.id,
+            KelpRemoteMethod.GetAuthSnapshot.encodeRequest(Unit),
         )
-        val response = TideRemoteMethod.GetAuthSnapshot.decodeResponse(
+        val response = KelpRemoteMethod.GetAuthSnapshot.decodeResponse(
             assertIs<LightResult.Success<String>>(result).data,
         )
 
@@ -51,11 +51,11 @@ class TideServiceMethodsTest {
 
     @Test
     fun loginActivityComponentIsToolOwned() {
-        val result = TideServiceMethods.dispatch(
-            TideRemoteMethod.GetLoginActivity.id,
-            TideRemoteMethod.GetLoginActivity.encodeRequest(Unit),
+        val result = KelpServiceMethods.dispatch(
+            KelpRemoteMethod.GetLoginActivity.id,
+            KelpRemoteMethod.GetLoginActivity.encodeRequest(Unit),
         )
-        val response = TideRemoteMethod.GetLoginActivity.decodeResponse(
+        val response = KelpRemoteMethod.GetLoginActivity.decodeResponse(
             assertIs<LightResult.Success<String>>(result).data,
         )
 
@@ -64,50 +64,50 @@ class TideServiceMethodsTest {
 
     @Test
     fun unknownMethodDoesNotDispatchToRuntime() {
-        val result = TideServiceMethods.dispatch("com.loosewire.kelp.unknown.v1", "{}")
+        val result = KelpServiceMethods.dispatch("com.loosewire.kelp.unknown.v1", "{}")
 
         val failure = assertIs<LightResult.Error>(result)
-        assertEquals(TideErrorCategory.Protocol, TideError.decodeOrNull(failure.extra)?.category)
+        assertEquals(KelpErrorCategory.Protocol, KelpError.decodeOrNull(failure.extra)?.category)
     }
 
     @Test
     fun collectionWithoutCatalogReturnsError() {
-        val result = TideServiceMethods.dispatch(
-            TideRemoteMethod.GetCollection.id,
-            TideRemoteMethod.GetCollection.encodeRequest(CollectionRequest()),
+        val result = KelpServiceMethods.dispatch(
+            KelpRemoteMethod.GetCollection.id,
+            KelpRemoteMethod.GetCollection.encodeRequest(CollectionRequest()),
         )
 
         val failure = assertIs<LightResult.Error>(result)
-        assertEquals(TideErrorCategory.Unavailable, TideError.decodeOrNull(failure.extra)?.category)
+        assertEquals(KelpErrorCategory.Unavailable, KelpError.decodeOrNull(failure.extra)?.category)
     }
 
     @Test
     fun collectionTimeoutReturnsStructuredError() {
-        TideServiceMethods.initializeCatalog(object : Catalog {
+        KelpServiceMethods.initializeCatalog(object : Catalog {
             override suspend fun collection(cursor: String?): Page<ReleaseSummary> {
                 delay(100)
                 return Page(emptyList(), null)
             }
         })
-        TideServiceMethods.setCollectionTimeoutForTests(1L)
+        KelpServiceMethods.setCollectionTimeoutForTests(1L)
 
         val failure = assertIs<LightResult.Error>(dispatchCollection())
 
-        assertEquals(TideErrorCategory.Timeout, TideError.decodeOrNull(failure.extra)?.category)
+        assertEquals(KelpErrorCategory.Timeout, KelpError.decodeOrNull(failure.extra)?.category)
     }
 
     @Test
     fun collectionNetworkFailureReturnsStructuredError() {
-        TideServiceMethods.initializeCatalog(object : Catalog {
+        KelpServiceMethods.initializeCatalog(object : Catalog {
             override suspend fun collection(cursor: String?): Page<ReleaseSummary> {
                 throw IOException("sensitive upstream detail")
             }
         })
 
         val failure = assertIs<LightResult.Error>(dispatchCollection())
-        val error = TideError.decodeOrNull(failure.extra)
+        val error = KelpError.decodeOrNull(failure.extra)
 
-        assertEquals(TideErrorCategory.Network, error?.category)
+        assertEquals(KelpErrorCategory.Network, error?.category)
         assertTrue(error?.message?.contains("sensitive") == false)
     }
 
@@ -115,7 +115,7 @@ class TideServiceMethodsTest {
     fun everyCatalogMethodAcceptsItsProtocolEncodedRequest() {
         val artist = ArtistSummary("artist", "Artist")
         val playlist = PlaylistSummary("playlist", "Playlist")
-        TideServiceMethods.initializeCatalog(object : Catalog {
+        KelpServiceMethods.initializeCatalog(object : Catalog {
             override suspend fun collection(cursor: String?) = Page<ReleaseSummary>(emptyList(), null)
             override suspend fun artists(cursor: String?) = Page<ArtistSummary>(emptyList(), null)
             override suspend fun tracks(cursor: String?) = Page<TrackSummary>(emptyList(), null)
@@ -130,43 +130,43 @@ class TideServiceMethodsTest {
         })
 
         val requests = listOf(
-            TideRemoteMethod.GetCollection.id to
-                TideRemoteMethod.GetCollection.encodeRequest(CollectionRequest()),
-            TideRemoteMethod.GetArtists.id to
-                TideRemoteMethod.GetArtists.encodeRequest(CollectionRequest()),
-            TideRemoteMethod.GetTracks.id to
-                TideRemoteMethod.GetTracks.encodeRequest(CollectionRequest()),
-            TideRemoteMethod.GetHome.id to TideRemoteMethod.GetHome.encodeRequest(Unit),
-            TideRemoteMethod.Search.id to
-                TideRemoteMethod.Search.encodeRequest(SearchRequest("query")),
-            TideRemoteMethod.GetArtistDetail.id to
-                TideRemoteMethod.GetArtistDetail.encodeRequest(ArtistRequest(artist)),
-            TideRemoteMethod.GetAlbumDetail.id to
-                TideRemoteMethod.GetAlbumDetail.encodeRequest(
+            KelpRemoteMethod.GetCollection.id to
+                KelpRemoteMethod.GetCollection.encodeRequest(CollectionRequest()),
+            KelpRemoteMethod.GetArtists.id to
+                KelpRemoteMethod.GetArtists.encodeRequest(CollectionRequest()),
+            KelpRemoteMethod.GetTracks.id to
+                KelpRemoteMethod.GetTracks.encodeRequest(CollectionRequest()),
+            KelpRemoteMethod.GetHome.id to KelpRemoteMethod.GetHome.encodeRequest(Unit),
+            KelpRemoteMethod.Search.id to
+                KelpRemoteMethod.Search.encodeRequest(SearchRequest("query")),
+            KelpRemoteMethod.GetArtistDetail.id to
+                KelpRemoteMethod.GetArtistDetail.encodeRequest(ArtistRequest(artist)),
+            KelpRemoteMethod.GetAlbumDetail.id to
+                KelpRemoteMethod.GetAlbumDetail.encodeRequest(
                     AlbumRequest(
                         ReleaseSummary("album", "Album", "Artist", com.loosewire.kelp.protocol.ReleaseType.Album, 1),
                     ),
                 ),
-            TideRemoteMethod.GetPlaylistDetail.id to
-                TideRemoteMethod.GetPlaylistDetail.encodeRequest(PlaylistRequest(playlist)),
+            KelpRemoteMethod.GetPlaylistDetail.id to
+                KelpRemoteMethod.GetPlaylistDetail.encodeRequest(PlaylistRequest(playlist)),
         )
 
         requests.forEach { (method, payload) ->
-            assertIs<LightResult.Success<String>>(TideServiceMethods.dispatch(method, payload))
+            assertIs<LightResult.Success<String>>(KelpServiceMethods.dispatch(method, payload))
         }
     }
 
     @Test
     fun malformedCatalogPayloadReturnsProtocolError() {
         val failure = assertIs<LightResult.Error>(
-            TideServiceMethods.dispatch(TideRemoteMethod.Search.id, "{not-json}"),
+            KelpServiceMethods.dispatch(KelpRemoteMethod.Search.id, "{not-json}"),
         )
 
-        assertEquals(TideErrorCategory.Protocol, TideError.decodeOrNull(failure.extra)?.category)
+        assertEquals(KelpErrorCategory.Protocol, KelpError.decodeOrNull(failure.extra)?.category)
     }
 
-    private fun dispatchCollection(): LightResult<String> = TideServiceMethods.dispatch(
-        TideRemoteMethod.GetCollection.id,
-        TideRemoteMethod.GetCollection.encodeRequest(CollectionRequest()),
+    private fun dispatchCollection(): LightResult<String> = KelpServiceMethods.dispatch(
+        KelpRemoteMethod.GetCollection.id,
+        KelpRemoteMethod.GetCollection.encodeRequest(CollectionRequest()),
     )
 }

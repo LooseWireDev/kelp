@@ -62,14 +62,14 @@ class CatalogContractTest {
     }
 
     @Test
-    fun tideErrorRoundTripsThroughBinderExtra() {
-        val expected = TideError(
-            category = TideErrorCategory.Timeout,
+    fun kelpErrorRoundTripsThroughBinderExtra() {
+        val expected = KelpError(
+            category = KelpErrorCategory.Timeout,
             message = "Loading your collection timed out. Please retry.",
         )
 
-        assertEquals(expected, TideError.decodeOrNull(expected.encode()))
-        assertNull(TideError.decodeOrNull("not a Kelp error"))
+        assertEquals(expected, KelpError.decodeOrNull(expected.encode()))
+        assertNull(KelpError.decodeOrNull("not a Kelp error"))
     }
 
     @Test

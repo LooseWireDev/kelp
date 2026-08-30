@@ -13,7 +13,7 @@ import com.tidal.sdk.auth.model.QueryParameter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-object TideRuntime {
+object KelpRuntime {
     private val snapshotLock = Any()
     private var authSnapshot = AuthSnapshot(AuthState.MissingConfiguration)
     @Volatile

@@ -27,7 +27,7 @@ import com.loosewire.kelp.protocol.AuthState
 import com.loosewire.kelp.protocol.HomeFeed
 import com.loosewire.kelp.protocol.PlaylistSummary
 import com.loosewire.kelp.protocol.ReleaseSummary
-import com.loosewire.kelp.protocol.TideError
+import com.loosewire.kelp.protocol.KelpError
 import com.loosewire.kelp.protocol.TrackSummary
 import com.loosewire.kelp.protocol.StartPlaybackRequest
 import com.thelightphone.sdk.InitialScreen
@@ -56,7 +56,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-enum class TideTab(val label: String) {
+enum class KelpTab(val label: String) {
     Home("Home"),
     Playlists("Playlists"),
     Artists("Artists"),
@@ -68,21 +68,21 @@ data class CatalogState<T>(
     val items: List<T> = emptyList(),
     val loading: Boolean = false,
     val loaded: Boolean = false,
-    val error: TideError? = null,
+    val error: KelpError? = null,
     val nextCursor: String? = null,
     val loadingMore: Boolean = false,
-    val loadMoreError: TideError? = null,
+    val loadMoreError: KelpError? = null,
 )
 
 class HomeViewModel(
-    private val tideClient: TideClient = BinderTideClient,
-    preferences: TidePreferences? = null,
+    private val kelpClient: KelpClient = BinderTideClient,
+    preferences: KelpPreferences? = null,
 ) : LightViewModel<Unit>() {
     data class UiState(
         val snapshot: AuthSnapshot? = null,
-        val authError: TideError? = null,
+        val authError: KelpError? = null,
         val authLoading: Boolean = true,
-        val selectedTab: TideTab = TideTab.Home,
+        val selectedTab: KelpTab = KelpTab.Home,
         val artists: CatalogState<ArtistSummary> = CatalogState(),
         val albums: CatalogState<ReleaseSummary> = CatalogState(),
         val songs: CatalogState<TrackSummary> = CatalogState(),
@@ -97,7 +97,7 @@ class HomeViewModel(
     private val playbackPreferences = preferences?.playback?.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = TidePlaybackPreferences(),
+        initialValue = KelpPlaybackPreferences(),
     )
 
     override fun onScreenShow(screen: SimpleLightScreen<Unit>) {
@@ -105,7 +105,7 @@ class HomeViewModel(
         refreshAuth()
     }
 
-    fun selectTab(tab: TideTab) {
+    fun selectTab(tab: KelpTab) {
         if (_state.value.selectedTab == tab) return
         cancelCatalogLoad()
         _state.value = _state.value.copy(selectedTab = tab)
@@ -118,11 +118,11 @@ class HomeViewModel(
 
     fun loadMoreSelectedTab() {
         when (_state.value.selectedTab) {
-            TideTab.Artists -> loadMoreArtists()
-            TideTab.Albums -> loadMoreAlbums()
-            TideTab.Songs -> loadMoreSongs()
-            TideTab.Home,
-            TideTab.Playlists,
+            KelpTab.Artists -> loadMoreArtists()
+            KelpTab.Albums -> loadMoreAlbums()
+            KelpTab.Songs -> loadMoreSongs()
+            KelpTab.Home,
+            KelpTab.Playlists,
             -> Unit
         }
     }
@@ -140,7 +140,7 @@ class HomeViewModel(
                 sourceName = sourceName,
                 continuousPlayback = playbackPreferences?.value?.continuousPlayback ?: true,
             )
-            if (tideClient.startPlayback(request) is TideClientResult.Success) onStarted()
+            if (kelpClient.startPlayback(request) is KelpClientResult.Success) onStarted()
         }
     }
 
@@ -148,13 +148,13 @@ class HomeViewModel(
         authJob?.cancel()
         authJob = viewModelScope.launch {
             _state.value = _state.value.copy(authLoading = true, authError = null)
-            when (val result = tideClient.authSnapshot()) {
-                is TideClientResult.Failure -> _state.value = _state.value.copy(
+            when (val result = kelpClient.authSnapshot()) {
+                is KelpClientResult.Failure -> _state.value = _state.value.copy(
                     authError = result.error,
                     authLoading = false,
                 )
 
-                is TideClientResult.Success -> {
+                is KelpClientResult.Success -> {
                     _state.value = _state.value.copy(
                         snapshot = result.data,
                         authError = null,
@@ -168,9 +168,9 @@ class HomeViewModel(
 
     fun loginActivityComponent(onComponent: (String) -> Unit) {
         viewModelScope.launch {
-            when (val result = tideClient.loginActivity()) {
-                is TideClientResult.Success -> onComponent(result.data.componentName)
-                is TideClientResult.Failure -> _state.value = _state.value.copy(authError = result.error)
+            when (val result = kelpClient.loginActivity()) {
+                is KelpClientResult.Success -> onComponent(result.data.componentName)
+                is KelpClientResult.Failure -> _state.value = _state.value.copy(authError = result.error)
             }
         }
     }
@@ -178,11 +178,11 @@ class HomeViewModel(
     private fun loadSelectedTab(force: Boolean = false) {
         if (_state.value.snapshot?.state != AuthState.Authenticated) return
         when (_state.value.selectedTab) {
-            TideTab.Artists -> loadArtists(force)
-            TideTab.Albums -> loadAlbums(force)
-            TideTab.Home -> loadHome(force)
-            TideTab.Playlists -> loadPlaylists(force)
-            TideTab.Songs -> loadSongs(force)
+            KelpTab.Artists -> loadArtists(force)
+            KelpTab.Albums -> loadAlbums(force)
+            KelpTab.Home -> loadHome(force)
+            KelpTab.Playlists -> loadPlaylists(force)
+            KelpTab.Songs -> loadSongs(force)
         }
     }
 
@@ -206,15 +206,15 @@ class HomeViewModel(
             artists = _state.value.artists.copy(loading = true, error = null),
         )
         catalogJob = viewModelScope.launch {
-            when (val result = tideClient.artists()) {
-                is TideClientResult.Success -> _state.value = _state.value.copy(
+            when (val result = kelpClient.artists()) {
+                is KelpClientResult.Success -> _state.value = _state.value.copy(
                     artists = CatalogState(
                         items = result.data.items.distinctBy { it.id },
                         loaded = true,
                         nextCursor = result.data.nextCursor,
                     ),
                 )
-                is TideClientResult.Failure -> _state.value = _state.value.copy(
+                is KelpClientResult.Failure -> _state.value = _state.value.copy(
                     artists = CatalogState(error = result.error, loaded = true),
                 )
             }
@@ -228,15 +228,15 @@ class HomeViewModel(
             albums = _state.value.albums.copy(loading = true, error = null),
         )
         catalogJob = viewModelScope.launch {
-            when (val result = tideClient.collection()) {
-                is TideClientResult.Success -> _state.value = _state.value.copy(
+            when (val result = kelpClient.collection()) {
+                is KelpClientResult.Success -> _state.value = _state.value.copy(
                     albums = CatalogState(
                         items = result.data.items.distinctBy { it.id },
                         loaded = true,
                         nextCursor = result.data.nextCursor,
                     ),
                 )
-                is TideClientResult.Failure -> _state.value = _state.value.copy(
+                is KelpClientResult.Failure -> _state.value = _state.value.copy(
                     albums = CatalogState(error = result.error, loaded = true),
                 )
             }
@@ -250,15 +250,15 @@ class HomeViewModel(
             songs = _state.value.songs.copy(loading = true, error = null),
         )
         catalogJob = viewModelScope.launch {
-            when (val result = tideClient.tracks()) {
-                is TideClientResult.Success -> _state.value = _state.value.copy(
+            when (val result = kelpClient.tracks()) {
+                is KelpClientResult.Success -> _state.value = _state.value.copy(
                     songs = CatalogState(
                         items = result.data.items.distinctBy { it.id },
                         loaded = true,
                         nextCursor = result.data.nextCursor,
                     ),
                 )
-                is TideClientResult.Failure -> _state.value = _state.value.copy(
+                is KelpClientResult.Failure -> _state.value = _state.value.copy(
                     songs = CatalogState(error = result.error, loaded = true),
                 )
             }
@@ -270,12 +270,12 @@ class HomeViewModel(
         catalogJob?.cancel()
         _state.value = _state.value.copy(home = _state.value.home.copy(loading = true, error = null))
         catalogJob = viewModelScope.launch {
-            when (val result = tideClient.home()) {
-                is TideClientResult.Success -> _state.value = _state.value.copy(
+            when (val result = kelpClient.home()) {
+                is KelpClientResult.Success -> _state.value = _state.value.copy(
                     home = CatalogState(items = listOf(result.data), loaded = true),
                     playlists = CatalogState(items = result.data.playlists, loaded = true),
                 )
-                is TideClientResult.Failure -> _state.value = _state.value.copy(
+                is KelpClientResult.Failure -> _state.value = _state.value.copy(
                     home = CatalogState(error = result.error, loaded = true),
                 )
             }
@@ -289,11 +289,11 @@ class HomeViewModel(
             playlists = _state.value.playlists.copy(loading = true, error = null),
         )
         catalogJob = viewModelScope.launch {
-            when (val result = tideClient.home()) {
-                is TideClientResult.Success -> _state.value = _state.value.copy(
+            when (val result = kelpClient.home()) {
+                is KelpClientResult.Success -> _state.value = _state.value.copy(
                     playlists = CatalogState(items = result.data.playlists, loaded = true),
                 )
-                is TideClientResult.Failure -> _state.value = _state.value.copy(
+                is KelpClientResult.Failure -> _state.value = _state.value.copy(
                     playlists = CatalogState(error = result.error, loaded = true),
                 )
             }
@@ -306,15 +306,15 @@ class HomeViewModel(
         if (current.loadingMore) return
         _state.value = _state.value.copy(artists = current.copy(loadingMore = true, loadMoreError = null))
         catalogJob = viewModelScope.launch {
-            when (val result = tideClient.artists(cursor)) {
-                is TideClientResult.Success -> _state.value = _state.value.copy(
+            when (val result = kelpClient.artists(cursor)) {
+                is KelpClientResult.Success -> _state.value = _state.value.copy(
                     artists = current.copy(
                         items = (current.items + result.data.items).distinctBy { it.id },
                         nextCursor = result.data.nextCursor,
                         loadingMore = false,
                     ),
                 )
-                is TideClientResult.Failure -> _state.value = _state.value.copy(
+                is KelpClientResult.Failure -> _state.value = _state.value.copy(
                     artists = current.copy(loadingMore = false, loadMoreError = result.error),
                 )
             }
@@ -327,15 +327,15 @@ class HomeViewModel(
         if (current.loadingMore) return
         _state.value = _state.value.copy(albums = current.copy(loadingMore = true, loadMoreError = null))
         catalogJob = viewModelScope.launch {
-            when (val result = tideClient.collection(cursor)) {
-                is TideClientResult.Success -> _state.value = _state.value.copy(
+            when (val result = kelpClient.collection(cursor)) {
+                is KelpClientResult.Success -> _state.value = _state.value.copy(
                     albums = current.copy(
                         items = (current.items + result.data.items).distinctBy { it.id },
                         nextCursor = result.data.nextCursor,
                         loadingMore = false,
                     ),
                 )
-                is TideClientResult.Failure -> _state.value = _state.value.copy(
+                is KelpClientResult.Failure -> _state.value = _state.value.copy(
                     albums = current.copy(loadingMore = false, loadMoreError = result.error),
                 )
             }
@@ -348,15 +348,15 @@ class HomeViewModel(
         if (current.loadingMore) return
         _state.value = _state.value.copy(songs = current.copy(loadingMore = true, loadMoreError = null))
         catalogJob = viewModelScope.launch {
-            when (val result = tideClient.tracks(cursor)) {
-                is TideClientResult.Success -> _state.value = _state.value.copy(
+            when (val result = kelpClient.tracks(cursor)) {
+                is KelpClientResult.Success -> _state.value = _state.value.copy(
                     songs = current.copy(
                         items = (current.items + result.data.items).distinctBy { it.id },
                         nextCursor = result.data.nextCursor,
                         loadingMore = false,
                     ),
                 )
-                is TideClientResult.Failure -> _state.value = _state.value.copy(
+                is KelpClientResult.Failure -> _state.value = _state.value.copy(
                     songs = current.copy(loadingMore = false, loadMoreError = result.error),
                 )
             }
@@ -385,7 +385,7 @@ class HomeScreen(sealedActivity: SealedLightActivity) : LightScreen<Unit, HomeVi
                     .fillMaxSize()
                     .background(LightThemeTokens.colors.background),
             ) {
-                TideTopBar(authenticated)
+                KelpTopBar(authenticated)
 
                 Box(
                     modifier = Modifier
@@ -396,7 +396,7 @@ class HomeScreen(sealedActivity: SealedLightActivity) : LightScreen<Unit, HomeVi
                 }
 
                 if (authenticated) {
-                    TideBottomBar(state.selectedTab)
+                    KelpBottomBar(state.selectedTab)
                 } else if (state.snapshot?.canSignIn == true) {
                     LightBottomBar(
                         items = listOf(
@@ -414,7 +414,7 @@ class HomeScreen(sealedActivity: SealedLightActivity) : LightScreen<Unit, HomeVi
     }
 
     @Composable
-    private fun TideTopBar(authenticated: Boolean) {
+    private fun KelpTopBar(authenticated: Boolean) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -451,13 +451,13 @@ class HomeScreen(sealedActivity: SealedLightActivity) : LightScreen<Unit, HomeVi
     }
 
     @Composable
-    private fun TideBottomBar(selected: TideTab) {
+    private fun KelpBottomBar(selected: KelpTab) {
         val tabs = listOf(
-            TideNavigationItem(TideTab.Home, LightIcons.HOME),
-            TideNavigationItem(TideTab.Playlists, LightIcons.LARGE_LIST),
-            TideNavigationItem(TideTab.Artists, LightIcons.CONTACTS),
-            TideNavigationItem(TideTab.Albums, LightIcons.MEDIA),
-            TideNavigationItem(TideTab.Songs, LightIcons.CIRCLE),
+            KelpNavigationItem(KelpTab.Home, LightIcons.HOME),
+            KelpNavigationItem(KelpTab.Playlists, LightIcons.LARGE_LIST),
+            KelpNavigationItem(KelpTab.Artists, LightIcons.CONTACTS),
+            KelpNavigationItem(KelpTab.Albums, LightIcons.MEDIA),
+            KelpNavigationItem(KelpTab.Songs, LightIcons.CIRCLE),
         )
 
         Row(
@@ -500,7 +500,7 @@ class HomeScreen(sealedActivity: SealedLightActivity) : LightScreen<Unit, HomeVi
     @Composable
     private fun TabContent(state: HomeViewModel.UiState) {
         when (state.selectedTab) {
-            TideTab.Artists -> CatalogList(
+            KelpTab.Artists -> CatalogList(
                 state = state.artists,
                 emptyMessage = "No saved artists.",
                 key = ArtistSummary::id,
@@ -509,7 +509,7 @@ class HomeScreen(sealedActivity: SealedLightActivity) : LightScreen<Unit, HomeVi
                     navigateTo(screenFactory = { ArtistScreen(it, artist) })
                 }
             }
-            TideTab.Albums -> CatalogList(
+            KelpTab.Albums -> CatalogList(
                 state = state.albums,
                 emptyMessage = "No saved albums.",
                 key = ReleaseSummary::id,
@@ -518,13 +518,13 @@ class HomeScreen(sealedActivity: SealedLightActivity) : LightScreen<Unit, HomeVi
                     navigateTo(screenFactory = { AlbumScreen(it, album) })
                 }
             }
-            TideTab.Home -> HomeContent(state.home)
-            TideTab.Playlists -> CatalogList(
+            KelpTab.Home -> HomeContent(state.home)
+            KelpTab.Playlists -> CatalogList(
                 state = state.playlists,
                 emptyMessage = "No saved playlists.",
                 key = PlaylistSummary::id,
             ) { HomePlaylistRow(it) }
-            TideTab.Songs -> CatalogList(
+            KelpTab.Songs -> CatalogList(
                 state = state.songs,
                 emptyMessage = "No saved songs.",
                 key = TrackSummary::id,
@@ -706,8 +706,8 @@ class HomeScreen(sealedActivity: SealedLightActivity) : LightScreen<Unit, HomeVi
         }
     }
 
-    private data class TideNavigationItem(
-        val tab: TideTab,
+    private data class KelpNavigationItem(
+        val tab: KelpTab,
         val icon: LightIconConfiguration,
     )
 

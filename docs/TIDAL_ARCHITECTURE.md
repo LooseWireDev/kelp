@@ -38,7 +38,7 @@ The public API does not expose a third-party playback-history resource, and `pla
 
 Playback is Kelp-owned end to end, following phono (github.com/jonathancaudill/phono; also orpheusdl/python-tidal). Stream entitlement is keyed on the OAuth client: tokens issued to registered developer apps only resolve 30-second previews, so Kelp performs a second PKCE sign-in with TIDAL's first-party Android client id (the clear hi-res tier; no Widevine CDM needed). The login screen chains both sign-ins on one WebView — the developer-app login for the catalog, then the first-party login for playback — and shared cookies usually carry the session into step two without re-entry.
 
-`TidalStreamResolver` resolves each track just-in-time: base64 BTS manifests yield progressive signed URLs; clear DASH manifests are sanitized (Media3 crashes on TIDAL's non-numeric `AdaptationSet group="main"`) and written to a temp MPD. ExoPlayer plays the result; the queue, shuffle/repeat, and continuous playback remain Kelp queue policy in `TidePlayerController`.
+`TidalStreamResolver` resolves each track just-in-time: base64 BTS manifests yield progressive signed URLs; clear DASH manifests are sanitized (Media3 crashes on TIDAL's non-numeric `AdaptationSet group="main"`) and written to a temp MPD. ExoPlayer plays the result; the queue, shuffle/repeat, and continuous playback remain Kelp queue policy in `KelpPlayerController`.
 
 The Light SDK's detached-audio capability remains declared so LightOS can support the tool's background audio lifecycle.
 

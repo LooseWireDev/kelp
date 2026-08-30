@@ -18,9 +18,9 @@ The current TIDAL integration is intentionally **sideload-only**. The official L
 Do not describe the current APK as a hosted-builder-compatible community tool. Reaching that state requires an upstream Light SDK decision: allowlist the TIDAL SDK and add an SDK-safe OAuth flow, or provide equivalent TIDAL methods from LightOS.
 
 ## Project structure
-- **:app** – Light SDK tool module. Light UI screens and `TideClient`, the binder RPC client. The Light plugin derives the `com.loosewire.kelp` application ID and manifest from `lighttool.toml`. No TIDAL or server imports; communicates entirely over typed protocol methods.
-- **:server** – Unrestricted Android library merged into both debug and release APKs as a runtime-only dependency. Hosts `TideRuntime` (TIDAL auth), `TideServiceMethods` (RPC dispatch), the self-hosted `LightSdkServer`, and the OAuth `WebView` activity.
-- **:protocol** – Pure Kotlin/JVM module. Serializable contracts and domain models (`AuthSnapshot`, `ReleaseSummary`, `TideRemoteMethod`) shared between app and server. No Android or TIDAL dependencies.
+- **:app** – Light SDK tool module. Light UI screens and `KelpClient`, the binder RPC client. The Light plugin derives the `com.loosewire.kelp` application ID and manifest from `lighttool.toml`. No TIDAL or server imports; communicates entirely over typed protocol methods.
+- **:server** – Unrestricted Android library merged into both debug and release APKs as a runtime-only dependency. Hosts `KelpRuntime` (TIDAL auth), `KelpServiceMethods` (RPC dispatch), the self-hosted `LightSdkServer`, and the OAuth `WebView` activity.
+- **:protocol** – Pure Kotlin/JVM module. Serializable contracts and domain models (`AuthSnapshot`, `ReleaseSummary`, `KelpRemoteMethod`) shared between app and server. No Android or TIDAL dependencies.
 - `:app`, `:protocol`, and `:server` consume the adjacent `../light-sdk` composite build.
 
 ## TIDAL configuration
@@ -62,11 +62,11 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 ## Architecture notes
 - The tool's `lighttool.toml` points `serverPackage = "com.loosewire.kelp"`, so the sideload APK binds to its embedded service. A conventional LightOS-hosted tool would use `com.lightos` instead.
-- `:app` never touches `TideRuntime` directly. It calls `TideClient` (interface) backed by `BinderTideClient`, which serializes requests through `LightServiceConnection.callRemoteServiceMethod(...)` using `TideRemoteMethod` IDs (e.g. `com.loosewire.kelp.auth.snapshot.v1`).
-- `:server` registers `TideServiceMethods.dispatch` as `LightSdkServer.customServiceMethodResolver` in `TideBootstrapProvider`, so custom Kelp methods are answered alongside built-in Light SDK methods.
-- `TideRuntime` owns the singleton returned by `TidalAuth.getInstance(...)` (developer-app catalog session) plus `TidalStreamingAuth` (first-party playback session), and exposes `currentAuthSnapshot()` returning a protocol `AuthSnapshot`.
+- `:app` never touches `KelpRuntime` directly. It calls `KelpClient` (interface) backed by `BinderTideClient`, which serializes requests through `LightServiceConnection.callRemoteServiceMethod(...)` using `KelpRemoteMethod` IDs (e.g. `com.loosewire.kelp.auth.snapshot.v1`).
+- `:server` registers `KelpServiceMethods.dispatch` as `LightSdkServer.customServiceMethodResolver` in `KelpBootstrapProvider`, so custom Kelp methods are answered alongside built-in Light SDK methods.
+- `KelpRuntime` owns the singleton returned by `TidalAuth.getInstance(...)` (developer-app catalog session) plus `TidalStreamingAuth` (first-party playback session), and exposes `currentAuthSnapshot()` returning a protocol `AuthSnapshot`.
 - The login flow chains developer-app PKCE then first-party PKCE in one WebView; shared cookies usually carry the session into step two.
-- `TidePlayerController` keeps queue/shuffle/repeat policy in Kelp and plays Media3 `ExoPlayer`; all player calls are marshaled to the main thread.
+- `KelpPlayerController` keeps queue/shuffle/repeat policy in Kelp and plays Media3 `ExoPlayer`; all player calls are marshaled to the main thread.
 - Missing credentials produce an in-app configuration message while still allowing a credential-free debug build.
 - The endpoint, scope, Home-feed, playback, offline, and attribution decisions are recorded in [`docs/TIDAL_ARCHITECTURE.md`](docs/TIDAL_ARCHITECTURE.md).
 

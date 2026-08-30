@@ -61,22 +61,22 @@ class PlayerViewModelTest {
 
 private class PlayerFakeTideClient(
     private val playback: PlaybackSnapshot,
-) : TideClient {
+) : KelpClient {
     var lastSeekPositionMs: Long? = null
         private set
 
-    override suspend fun playback(): TideClientResult<PlaybackSnapshot> =
-        TideClientResult.Success(playback)
+    override suspend fun playback(): KelpClientResult<PlaybackSnapshot> =
+        KelpClientResult.Success(playback)
 
-    override suspend fun authSnapshot(): TideClientResult<AuthSnapshot> = error("Not used")
+    override suspend fun authSnapshot(): KelpClientResult<AuthSnapshot> = error("Not used")
 
-    override suspend fun loginActivity(): TideClientResult<ServerActivity> = error("Not used")
+    override suspend fun loginActivity(): KelpClientResult<ServerActivity> = error("Not used")
 
-    override suspend fun collection(cursor: String?): TideClientResult<Page<ReleaseSummary>> =
+    override suspend fun collection(cursor: String?): KelpClientResult<Page<ReleaseSummary>> =
         error("Not used")
 
-    override suspend fun seekPlayback(positionMs: Long): TideClientResult<PlaybackSnapshot> {
+    override suspend fun seekPlayback(positionMs: Long): KelpClientResult<PlaybackSnapshot> {
         lastSeekPositionMs = positionMs
-        return TideClientResult.Success(playback.copy(positionMs = positionMs))
+        return KelpClientResult.Success(playback.copy(positionMs = positionMs))
     }
 }

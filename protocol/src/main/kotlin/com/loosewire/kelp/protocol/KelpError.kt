@@ -4,7 +4,7 @@ import com.thelightphone.sdk.shared.lightJson
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class TideErrorCategory {
+enum class KelpErrorCategory {
     Authentication,
     Network,
     Timeout,
@@ -13,14 +13,14 @@ enum class TideErrorCategory {
 }
 
 @Serializable
-data class TideError(
-    val category: TideErrorCategory,
+data class KelpError(
+    val category: KelpErrorCategory,
     val message: String,
 ) {
     fun encode(): String = lightJson.encodeToString(serializer(), this)
 
     companion object {
-        fun decodeOrNull(value: String?): TideError? = value?.let {
+        fun decodeOrNull(value: String?): KelpError? = value?.let {
             runCatching { lightJson.decodeFromString(serializer(), it) }.getOrNull()
         }
     }

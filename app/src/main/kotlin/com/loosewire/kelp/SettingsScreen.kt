@@ -34,13 +34,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
-    private val preferences: TidePreferences,
-    private val tideClient: TideClient = BinderTideClient,
+    private val preferences: KelpPreferences,
+    private val kelpClient: KelpClient = BinderTideClient,
 ) : LightViewModel<Unit>() {
     val playback = preferences.playback.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = TidePlaybackPreferences(),
+        initialValue = KelpPlaybackPreferences(),
     )
 
     private val _signedOut = MutableStateFlow(false)
@@ -48,9 +48,9 @@ class SettingsViewModel(
 
     fun signOut() {
         viewModelScope.launch {
-            when (val result = tideClient.logout()) {
-                is TideClientResult.Success -> _signedOut.value = true
-                is TideClientResult.Failure -> Unit
+            when (val result = kelpClient.logout()) {
+                is KelpClientResult.Success -> _signedOut.value = true
+                is KelpClientResult.Failure -> Unit
             }
         }
     }

@@ -6,19 +6,19 @@ Light Phone III TIDAL client built on `lightphone/light-sdk` (composite build fr
 
 | Module | Kind | Owns | Key files |
 | --- | --- | --- | --- |
-| `:app` | Light SDK tool module | Light UI screens, `TideClient` binder RPC client | `app/src/main/kotlin/com/loosewire/kelp/*.kt`, `app/lighttool.toml` |
-| `:protocol` | Pure Kotlin/JVM | Serializable RPC contracts + domain models (`TideRemoteMethod`, `AuthSnapshot`, `TrackSummary`, `PlaybackSnapshot`) | `protocol/src/main/kotlin/com/loosewire/kelp/protocol/` |
+| `:app` | Light SDK tool module | Light UI screens, `KelpClient` binder RPC client | `app/src/main/kotlin/com/loosewire/kelp/*.kt`, `app/lighttool.toml` |
+| `:protocol` | Pure Kotlin/JVM | Serializable RPC contracts + domain models (`KelpRemoteMethod`, `AuthSnapshot`, `TrackSummary`, `PlaybackSnapshot`) | `protocol/src/main/kotlin/com/loosewire/kelp/protocol/` |
 | `:server` | Unrestricted Android library, merged runtime-only into the APK | Everything TIDAL: catalog API, auth sessions, playback, RPC dispatch | `server/src/main/kotlin/com/loosewire/kelp/server/` |
 
 Distribution lane: **sideload-only, experimental/local.** Not eligible for Light's hosted builder (it ignores sibling modules and doesn't allowlist the TIDAL SDK). Never describe an APK as builder/distribution compatible — the hosted-builder compat story is documented in README "Light SDK status".
 
 ## Invariants — read before editing
 
-- **`:app` never imports TIDAL SDK, okhttp, Media3, or `:server` types.** Everything crosses the Light binder via `TideRemoteMethod` IDs (`com.loosewire.kelp.*`). Add a feature by extending `:protocol` contracts, dispatch in `TideServiceMethods`, and a client method in `TideClient.kt`.
+- **`:app` never imports TIDAL SDK, okhttp, Media3, or `:server` types.** Everything crosses the Light binder via `KelpRemoteMethod` IDs (`com.loosewire.kelp.*`). Add a feature by extending `:protocol` contracts, dispatch in `KelpServiceMethods`, and a client method in `KelpClient.kt`.
 - **`:protocol` stays Android/TIDAL-free.** Serializable models only, no platform imports.
-- **Two TIDAL sessions** (`TideRuntime`): developer-app auth3 login for the v2 Public API (catalog) + `TidalStreamingAuth` first-party PKCE for playback. Catalog endpoints only accept the developer token; full-length streams only resolve with the first-party token. Do not collapse them.
-- **Playback is Kelp-owned**: `TidalStreamResolver` (private `playbackinfopostpaywall`, BTS/clear-DASH) + Media3 ExoPlayer in `TidePlayerController`. The official TIDAL Player SDK was removed on purpose — do not reintroduce it.
-- **`TidePlayerController` threading**: queue state under `stateLock`; ExoPlayer calls only on the main thread via `onPlayer{}`; never call `onPlayer` (blocking post) while holding `stateLock`; playback liveness in `@Volatile` fields.
+- **Two TIDAL sessions** (`KelpRuntime`): developer-app auth3 login for the v2 Public API (catalog) + `TidalStreamingAuth` first-party PKCE for playback. Catalog endpoints only accept the developer token; full-length streams only resolve with the first-party token. Do not collapse them.
+- **Playback is Kelp-owned**: `TidalStreamResolver` (private `playbackinfopostpaywall`, BTS/clear-DASH) + Media3 ExoPlayer in `KelpPlayerController`. The official TIDAL Player SDK was removed on purpose — do not reintroduce it.
+- **`KelpPlayerController` threading**: queue state under `stateLock`; ExoPlayer calls only on the main thread via `onPlayer{}`; never call `onPlayer` (blocking post) while holding `stateLock`; playback liveness in `@Volatile` fields.
 - **Media3 is strict-pinned to 1.5.0** in both `app` and `server` (Light SDK resolves a newer version). Keep both pins in sync.
 - **`lighttool.toml` is the identity source** (app id, version, capabilities, `serverPackage = "com.loosewire.kelp"`). Do not hand-write what the plugin generates.
 - **Secrets**: `local.properties` holds the developer-app client id and is git-ignored. Never embed it. The first-party client id in `TidalStreamingAuth` is intentionally embedded (public, shared with orpheusdl/phono; rotation procedure in `docs/TIDAL_ARCHITECTURE.md` and README).
@@ -45,5 +45,5 @@ Emulator/device work follows the `lightos-emulator` skill (never run system-part
 ## Commits & style
 
 - Lowercase conventional commits (`feat:`, `chore:`, `docs:`), one logical change per commit, matching `git log`.
-- Existing code style: no trailing braces-only lines, `java.util.logging` in server, protocol errors mapped to `TideError` with user-safe messages.
+- Existing code style: no trailing braces-only lines, `java.util.logging` in server, protocol errors mapped to `KelpError` with user-safe messages.
 - Docs that must stay truthful: `README.md` (setup/lane/deps), `docs/TIDAL_ARCHITECTURE.md` (TIDAL decisions), `docs/PRODUCT.md`.

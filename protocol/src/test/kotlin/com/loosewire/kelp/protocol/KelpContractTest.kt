@@ -4,13 +4,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class TideContractTest {
-    private val allDeclared: List<TideRemoteMethod<*, *>> by lazy {
-        TideRemoteMethod::class.java.declaredClasses
-            .filter { TideRemoteMethod::class.java.isAssignableFrom(it) }
+class KelpContractTest {
+    private val allDeclared: List<KelpRemoteMethod<*, *>> by lazy {
+        KelpRemoteMethod::class.java.declaredClasses
+            .filter { KelpRemoteMethod::class.java.isAssignableFrom(it) }
             .mapNotNull { clazz ->
                 runCatching {
-                    clazz.getDeclaredField("INSTANCE").get(null) as TideRemoteMethod<*, *>
+                    clazz.getDeclaredField("INSTANCE").get(null) as KelpRemoteMethod<*, *>
                 }.getOrNull()
             }
     }
@@ -27,6 +27,6 @@ class TideContractTest {
 
     @Test
     fun registryMatchesDeclaredMethods() {
-        assertEquals(allDeclared.map { it.id }.toSet(), tideRemoteMethods.keys)
+        assertEquals(allDeclared.map { it.id }.toSet(), kelpRemoteMethods.keys)
     }
 }

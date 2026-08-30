@@ -8,7 +8,7 @@ import com.thelightphone.sdk.server.ClientCertType
 import com.thelightphone.sdk.server.ClientFilterLevel
 import com.thelightphone.sdk.server.LightSdkServer
 
-class TideBootstrapProvider : ContentProvider() {
+class KelpBootstrapProvider : ContentProvider() {
     override fun onCreate(): Boolean {
         val appContext = context?.applicationContext ?: return false
         with(LightSdkServer) {
@@ -21,13 +21,13 @@ class TideBootstrapProvider : ContentProvider() {
                 }
             }
             customServiceMethodResolver = { _, methodId, payload ->
-                TideServiceMethods.dispatch(methodId, payload)
+                KelpServiceMethods.dispatch(methodId, payload)
             }
         }
-        TideServiceMethods.initialize(appContext)
-        TideRuntime.initialize(appContext)
-        TideRuntime.tidalAuth()?.credentialsProvider?.let { provider ->
-            TideServiceMethods.initializeCatalog(TidalCatalog(provider))
+        KelpServiceMethods.initialize(appContext)
+        KelpRuntime.initialize(appContext)
+        KelpRuntime.tidalAuth()?.credentialsProvider?.let { provider ->
+            KelpServiceMethods.initializeCatalog(TidalCatalog(provider))
         }
         return true
     }

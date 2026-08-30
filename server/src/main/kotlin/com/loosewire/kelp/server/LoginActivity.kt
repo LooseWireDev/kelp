@@ -34,7 +34,7 @@ class LoginActivity : ComponentActivity() {
      * WebView cookies carry the TIDAL session into step two.
      */
     private fun startLogin() {
-        TideRuntime.initialize(applicationContext)
+        KelpRuntime.initialize(applicationContext)
         val loginUri = nextLoginUri()
         if (loginUri == null) {
             finish()
@@ -59,26 +59,26 @@ class LoginActivity : ComponentActivity() {
     }
 
     private fun nextLoginUri(): Uri? = when {
-        !TideRuntime.developerLoggedIn() -> TideRuntime.loginUri()
-        TideRuntime.streamingNeedsLogin() -> TideRuntime.streamingLoginUri()
+        !KelpRuntime.developerLoggedIn() -> KelpRuntime.loginUri()
+        KelpRuntime.streamingNeedsLogin() -> KelpRuntime.streamingLoginUri()
         else -> null
     }
 
     private fun handleRedirect(uri: Uri, view: WebView): Boolean {
         when {
-            TideRuntime.isStreamingRedirectUri(uri) -> lifecycleScope.launch {
-                if (TideRuntime.finalizeStreamingLogin(uri)) {
+            KelpRuntime.isStreamingRedirectUri(uri) -> lifecycleScope.launch {
+                if (KelpRuntime.finalizeStreamingLogin(uri)) {
                     continueSignIn(view)
                 } else {
-                    showError(authStateMessage(TideRuntime.currentAuthSnapshot()))
+                    showError(authStateMessage(KelpRuntime.currentAuthSnapshot()))
                 }
             }
 
-            TideRuntime.isRedirectUri(uri) -> lifecycleScope.launch {
-                if (TideRuntime.finalizeLogin(uri)) {
+            KelpRuntime.isRedirectUri(uri) -> lifecycleScope.launch {
+                if (KelpRuntime.finalizeLogin(uri)) {
                     continueSignIn(view)
                 } else {
-                    showError(authStateMessage(TideRuntime.currentAuthSnapshot()))
+                    showError(authStateMessage(KelpRuntime.currentAuthSnapshot()))
                 }
             }
 
@@ -90,8 +90,8 @@ class LoginActivity : ComponentActivity() {
     private fun continueSignIn(view: WebView) {
         val next = nextLoginUri()
         if (next == null) {
-            if (!TideRuntime.developerLoggedIn()) {
-                showError(authStateMessage(TideRuntime.currentAuthSnapshot()))
+            if (!KelpRuntime.developerLoggedIn()) {
+                showError(authStateMessage(KelpRuntime.currentAuthSnapshot()))
             } else {
                 finish()
             }

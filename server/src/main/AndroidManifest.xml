@@ -10,7 +10,7 @@
     <application>
         <!-- Bootstrap ContentProvider (non-exported) -->
         <provider
-            android:name=".TideBootstrapProvider"
+            android:name=".KelpBootstrapProvider"
             android:authorities="com.loosewire.kelp.server.bootstrap"
             android:exported="false" />
 

@@ -54,7 +54,7 @@ class HomeViewModelTest {
         viewModel.refreshAuth()
         runCurrent()
 
-        assertEquals(TideTab.Home, viewModel.state.value.selectedTab)
+        assertEquals(KelpTab.Home, viewModel.state.value.selectedTab)
         assertEquals(feed, viewModel.state.value.home.items.single())
         assertFalse(viewModel.state.value.home.loading)
         assertEquals(1, client.homeCalls)
@@ -70,10 +70,10 @@ class HomeViewModelTest {
         viewModel.refreshAuth()
         runCurrent()
 
-        viewModel.selectTab(TideTab.Albums)
+        viewModel.selectTab(KelpTab.Albums)
         runCurrent()
-        viewModel.selectTab(TideTab.Home)
-        viewModel.selectTab(TideTab.Albums)
+        viewModel.selectTab(KelpTab.Home)
+        viewModel.selectTab(KelpTab.Albums)
         runCurrent()
 
         assertEquals(1, client.albumCalls)
@@ -117,7 +117,7 @@ private class HomeFakeTideClient(
     private val savedTracks: List<TrackSummary> = emptyList(),
     private val homeFeed: HomeFeed = HomeFeed(emptyList(), emptyList()),
     private val searchResult: SearchResults = SearchResults(emptyList(), emptyList(), emptyList()),
-) : TideClient {
+) : KelpClient {
     var artistCalls = 0
         private set
     var albumCalls = 0
@@ -127,35 +127,35 @@ private class HomeFakeTideClient(
     var homeCalls = 0
         private set
 
-    override suspend fun authSnapshot(): TideClientResult<AuthSnapshot> =
-        TideClientResult.Success(auth)
+    override suspend fun authSnapshot(): KelpClientResult<AuthSnapshot> =
+        KelpClientResult.Success(auth)
 
-    override suspend fun loginActivity(): TideClientResult<ServerActivity> =
-        TideClientResult.Success(ServerActivity("com.loosewire.kelp/.server.LoginActivity"))
+    override suspend fun loginActivity(): KelpClientResult<ServerActivity> =
+        KelpClientResult.Success(ServerActivity("com.loosewire.kelp/.server.LoginActivity"))
 
-    override suspend fun collection(cursor: String?): TideClientResult<Page<ReleaseSummary>> {
+    override suspend fun collection(cursor: String?): KelpClientResult<Page<ReleaseSummary>> {
         albumCalls += 1
-        return TideClientResult.Success(Page(savedAlbums, nextCursor = null))
+        return KelpClientResult.Success(Page(savedAlbums, nextCursor = null))
     }
 
-    override suspend fun artists(cursor: String?): TideClientResult<Page<ArtistSummary>> {
+    override suspend fun artists(cursor: String?): KelpClientResult<Page<ArtistSummary>> {
         artistCalls += 1
-        return TideClientResult.Success(Page(savedArtists, nextCursor = null))
+        return KelpClientResult.Success(Page(savedArtists, nextCursor = null))
     }
 
-    override suspend fun tracks(cursor: String?): TideClientResult<Page<TrackSummary>> =
-        TideClientResult.Success(Page(savedTracks, nextCursor = null))
+    override suspend fun tracks(cursor: String?): KelpClientResult<Page<TrackSummary>> =
+        KelpClientResult.Success(Page(savedTracks, nextCursor = null))
 
-    override suspend fun home(): TideClientResult<HomeFeed> {
+    override suspend fun home(): KelpClientResult<HomeFeed> {
         homeCalls += 1
-        return TideClientResult.Success(homeFeed)
+        return KelpClientResult.Success(homeFeed)
     }
 
-    override suspend fun search(query: String): TideClientResult<SearchResults> {
+    override suspend fun search(query: String): KelpClientResult<SearchResults> {
         searchCalls += 1
-        return TideClientResult.Success(searchResult)
+        return KelpClientResult.Success(searchResult)
     }
 
-    override suspend fun artistDetail(artist: ArtistSummary): TideClientResult<ArtistDetail> =
-        TideClientResult.Success(ArtistDetail(artist, emptyList(), emptyList()))
+    override suspend fun artistDetail(artist: ArtistSummary): KelpClientResult<ArtistDetail> =
+        KelpClientResult.Success(ArtistDetail(artist, emptyList(), emptyList()))
 }

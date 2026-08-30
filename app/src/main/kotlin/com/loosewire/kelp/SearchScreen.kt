@@ -23,7 +23,7 @@ import com.loosewire.kelp.protocol.ReleaseSummary
 import com.loosewire.kelp.protocol.SearchResults
 import com.loosewire.kelp.protocol.SearchSection
 import com.loosewire.kelp.protocol.StartPlaybackRequest
-import com.loosewire.kelp.protocol.TideError
+import com.loosewire.kelp.protocol.KelpError
 import com.loosewire.kelp.protocol.TrackSummary
 import com.thelightphone.sdk.LightScreen
 import com.thelightphone.sdk.LightViewModel
@@ -153,16 +153,16 @@ class SearchScreen(sealedActivity: SealedLightActivity) : LightScreen<Unit, Sear
 private class SearchResultsViewModel(
     private val query: String,
     private val section: SearchSection,
-    private val tideClient: TideClient = BinderTideClient,
-    preferences: TidePreferences? = null,
+    private val kelpClient: KelpClient = BinderTideClient,
+    preferences: KelpPreferences? = null,
 ) : LightViewModel<Unit>() {
     data class UiState(
         val results: SearchResults = SearchResults(emptyList(), emptyList(), emptyList()),
         val loading: Boolean = true,
         val loaded: Boolean = false,
         val loadingMore: Boolean = false,
-        val error: TideError? = null,
-        val loadMoreError: TideError? = null,
+        val error: KelpError? = null,
+        val loadMoreError: KelpError? = null,
     )
 
     private val _state = MutableStateFlow(UiState())
@@ -171,7 +171,7 @@ private class SearchResultsViewModel(
     private val playbackPreferences = preferences?.playback?.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = TidePlaybackPreferences(),
+        initialValue = KelpPlaybackPreferences(),
     )
 
     override fun onScreenShow(screen: SimpleLightScreen<Unit>) {
@@ -196,13 +196,13 @@ private class SearchResultsViewModel(
 
     private suspend fun loadPage(cursor: String?, append: Boolean) {
         val before = _state.value
-        when (val result = tideClient.searchPage(query, section, cursor)) {
-            is TideClientResult.Success -> _state.value = UiState(
+        when (val result = kelpClient.searchPage(query, section, cursor)) {
+            is KelpClientResult.Success -> _state.value = UiState(
                 results = if (append) before.results.append(result.data) else result.data,
                 loading = false,
                 loaded = true,
             )
-            is TideClientResult.Failure -> _state.value = if (append) {
+            is KelpClientResult.Failure -> _state.value = if (append) {
                 before.copy(loadingMore = false, loadMoreError = result.error)
             } else {
                 UiState(loading = false, loaded = true, error = result.error)
@@ -222,7 +222,7 @@ private class SearchResultsViewModel(
         val tracks = _state.value.results.tracks
         if (index !in tracks.indices) return
         viewModelScope.launch {
-            val result = tideClient.startPlayback(
+            val result = kelpClient.startPlayback(
                 StartPlaybackRequest(
                     tracks = tracks,
                     startIndex = index,
@@ -230,7 +230,7 @@ private class SearchResultsViewModel(
                     continuousPlayback = playbackPreferences?.value?.continuousPlayback ?: true,
                 ),
             )
-            if (result is TideClientResult.Success) onStarted()
+            if (result is KelpClientResult.Success) onStarted()
         }
     }
 }

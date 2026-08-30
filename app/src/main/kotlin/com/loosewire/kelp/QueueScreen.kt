@@ -22,7 +22,7 @@ import androidx.lifecycle.viewModelScope
 import com.loosewire.kelp.protocol.PlaybackSnapshot
 import com.loosewire.kelp.protocol.PlayerCommand
 import com.loosewire.kelp.protocol.RepeatMode
-import com.loosewire.kelp.protocol.TideError
+import com.loosewire.kelp.protocol.KelpError
 import com.thelightphone.sdk.LightScreen
 import com.thelightphone.sdk.LightViewModel
 import com.thelightphone.sdk.SealedLightActivity
@@ -49,12 +49,12 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class PlayerViewModel(
-    private val tideClient: TideClient = BinderTideClient,
+    private val kelpClient: KelpClient = BinderTideClient,
 ) : LightViewModel<Unit>() {
     data class UiState(
         val playback: PlaybackSnapshot? = null,
         val loading: Boolean = true,
-        val error: TideError? = null,
+        val error: KelpError? = null,
     )
 
     private val _state = MutableStateFlow(UiState())
@@ -86,17 +86,17 @@ class PlayerViewModel(
     }
 
     private suspend fun refreshPlayback() {
-        when (val result = tideClient.playback()) {
-            is TideClientResult.Success -> _state.value = UiState(playback = result.data, loading = false)
-            is TideClientResult.Failure -> _state.value = UiState(loading = false, error = result.error)
+        when (val result = kelpClient.playback()) {
+            is KelpClientResult.Success -> _state.value = UiState(playback = result.data, loading = false)
+            is KelpClientResult.Failure -> _state.value = UiState(loading = false, error = result.error)
         }
     }
 
     fun control(command: PlayerCommand) {
         viewModelScope.launch {
-            when (val result = tideClient.controlPlayback(command)) {
-                is TideClientResult.Success -> _state.value = UiState(playback = result.data, loading = false)
-                is TideClientResult.Failure -> _state.value = _state.value.copy(error = result.error)
+            when (val result = kelpClient.controlPlayback(command)) {
+                is KelpClientResult.Success -> _state.value = UiState(playback = result.data, loading = false)
+                is KelpClientResult.Failure -> _state.value = _state.value.copy(error = result.error)
             }
         }
     }
@@ -114,9 +114,9 @@ class PlayerViewModel(
         seekJob?.cancel()
         seekJob = viewModelScope.launch {
             delay(SeekDebounceMillis)
-            when (val result = tideClient.seekPlayback(positionMs)) {
-                is TideClientResult.Success -> _state.value = UiState(playback = result.data, loading = false)
-                is TideClientResult.Failure -> _state.value = _state.value.copy(error = result.error)
+            when (val result = kelpClient.seekPlayback(positionMs)) {
+                is KelpClientResult.Success -> _state.value = UiState(playback = result.data, loading = false)
+                is KelpClientResult.Failure -> _state.value = _state.value.copy(error = result.error)
             }
         }
     }

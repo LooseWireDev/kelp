@@ -13,9 +13,9 @@ import com.loosewire.kelp.protocol.StartPlaybackRequest
 import com.loosewire.kelp.protocol.SearchRequest
 import com.loosewire.kelp.protocol.SearchPageRequest
 import com.loosewire.kelp.protocol.ServerActivity
-import com.loosewire.kelp.protocol.TideError
-import com.loosewire.kelp.protocol.TideErrorCategory
-import com.loosewire.kelp.protocol.TideRemoteMethod
+import com.loosewire.kelp.protocol.KelpError
+import com.loosewire.kelp.protocol.KelpErrorCategory
+import com.loosewire.kelp.protocol.KelpRemoteMethod
 import com.thelightphone.sdk.shared.LightResult
 import java.io.IOException
 import java.util.logging.Level
@@ -25,15 +25,15 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.SerializationException
 
-object TideServiceMethods {
-    private val logger = Logger.getLogger(TideServiceMethods::class.java.name)
+object KelpServiceMethods {
+    private val logger = Logger.getLogger(KelpServiceMethods::class.java.name)
     private var loginActivityComponent = "com.loosewire.kelp/.server.LoginActivity"
     private lateinit var applicationContext: Context
     private val catalogLock = Any()
     @Volatile
     private var catalog: Catalog? = null
     @Volatile
-    private var playerController: TidePlayerController? = null
+    private var playerController: KelpPlayerController? = null
 
     fun initialize(context: Context) {
         applicationContext = context.applicationContext
@@ -52,64 +52,64 @@ object TideServiceMethods {
 
     fun dispatch(methodId: String, payload: String?): LightResult<String> = try {
         when (methodId) {
-            TideRemoteMethod.GetAuthSnapshot.id -> LightResult.Success(
-                TideRemoteMethod.GetAuthSnapshot.encodeResponse(
-                    TideRuntime.currentAuthSnapshot(),
+            KelpRemoteMethod.GetAuthSnapshot.id -> LightResult.Success(
+                KelpRemoteMethod.GetAuthSnapshot.encodeResponse(
+                    KelpRuntime.currentAuthSnapshot(),
                 ),
             )
 
-            TideRemoteMethod.GetLoginActivity.id -> LightResult.Success(
-                TideRemoteMethod.GetLoginActivity.encodeResponse(
+            KelpRemoteMethod.GetLoginActivity.id -> LightResult.Success(
+                KelpRemoteMethod.GetLoginActivity.encodeResponse(
                     ServerActivity(loginActivityComponent),
                 ),
             )
 
-            TideRemoteMethod.Logout.id -> {
-                runBlocking { TideRuntime.logout() }
+            KelpRemoteMethod.Logout.id -> {
+                runBlocking { KelpRuntime.logout() }
                 synchronized(catalogLock) {
                     playerController?.release()
                     playerController = null
                     catalog = null
                 }
                 LightResult.Success(
-                    TideRemoteMethod.Logout.encodeResponse(TideRuntime.currentAuthSnapshot()),
+                    KelpRemoteMethod.Logout.encodeResponse(KelpRuntime.currentAuthSnapshot()),
                 )
             }
 
-            TideRemoteMethod.GetCollection.id -> {
-                val request = TideRemoteMethod.GetCollection.decodeRequest(payload ?: "{}")
+            KelpRemoteMethod.GetCollection.id -> {
+                val request = KelpRemoteMethod.GetCollection.decodeRequest(payload ?: "{}")
                 handleCatalog(
                     operation = { it.collection(request.cursor) },
-                    encode = TideRemoteMethod.GetCollection::encodeResponse,
+                    encode = KelpRemoteMethod.GetCollection::encodeResponse,
                 )
             }
 
-            TideRemoteMethod.GetArtists.id -> {
-                val request = TideRemoteMethod.GetArtists.decodeRequest(payload ?: "{}")
+            KelpRemoteMethod.GetArtists.id -> {
+                val request = KelpRemoteMethod.GetArtists.decodeRequest(payload ?: "{}")
                 handleCatalog(
                     operation = { it.artists(request.cursor) },
-                    encode = TideRemoteMethod.GetArtists::encodeResponse,
+                    encode = KelpRemoteMethod.GetArtists::encodeResponse,
                 )
             }
 
-            TideRemoteMethod.GetTracks.id -> {
-                val request = TideRemoteMethod.GetTracks.decodeRequest(payload ?: "{}")
+            KelpRemoteMethod.GetTracks.id -> {
+                val request = KelpRemoteMethod.GetTracks.decodeRequest(payload ?: "{}")
                 handleCatalog(
                     operation = { it.tracks(request.cursor) },
-                    encode = TideRemoteMethod.GetTracks::encodeResponse,
+                    encode = KelpRemoteMethod.GetTracks::encodeResponse,
                 )
             }
 
-            TideRemoteMethod.GetHome.id -> handleCatalog(
+            KelpRemoteMethod.GetHome.id -> handleCatalog(
                 operation = Catalog::home,
-                encode = TideRemoteMethod.GetHome::encodeResponse,
+                encode = KelpRemoteMethod.GetHome::encodeResponse,
             )
 
-            TideRemoteMethod.Search.id -> {
-                val request = TideRemoteMethod.Search.decodeRequest(payload ?: "{}")
+            KelpRemoteMethod.Search.id -> {
+                val request = KelpRemoteMethod.Search.decodeRequest(payload ?: "{}")
                 if (request.query.isBlank()) {
                     failure(
-                        TideErrorCategory.Protocol,
+                        KelpErrorCategory.Protocol,
                         "Enter something to search for.",
                         LightResult.ErrorCode.InvalidParameters,
                     )
@@ -118,11 +118,11 @@ object TideServiceMethods {
                 }
             }
 
-            TideRemoteMethod.SearchPage.id -> {
-                val request = TideRemoteMethod.SearchPage.decodeRequest(payload ?: "{}")
+            KelpRemoteMethod.SearchPage.id -> {
+                val request = KelpRemoteMethod.SearchPage.decodeRequest(payload ?: "{}")
                 if (request.query.isBlank()) {
                     failure(
-                        TideErrorCategory.Protocol,
+                        KelpErrorCategory.Protocol,
                         "Enter something to search for.",
                         LightResult.ErrorCode.InvalidParameters,
                     )
@@ -131,49 +131,49 @@ object TideServiceMethods {
                 }
             }
 
-            TideRemoteMethod.GetArtistDetail.id -> {
-                val request = TideRemoteMethod.GetArtistDetail.decodeRequest(payload ?: "{}")
+            KelpRemoteMethod.GetArtistDetail.id -> {
+                val request = KelpRemoteMethod.GetArtistDetail.decodeRequest(payload ?: "{}")
                 handleArtistDetail(request)
             }
 
-            TideRemoteMethod.GetArtistReleases.id -> {
-                val request = TideRemoteMethod.GetArtistReleases.decodeRequest(payload ?: "{}")
+            KelpRemoteMethod.GetArtistReleases.id -> {
+                val request = KelpRemoteMethod.GetArtistReleases.decodeRequest(payload ?: "{}")
                 handleArtistReleases(request)
             }
 
-            TideRemoteMethod.GetArtistTracks.id -> {
-                val request = TideRemoteMethod.GetArtistTracks.decodeRequest(payload ?: "{}")
+            KelpRemoteMethod.GetArtistTracks.id -> {
+                val request = KelpRemoteMethod.GetArtistTracks.decodeRequest(payload ?: "{}")
                 handleArtistTracks(request)
             }
 
-            TideRemoteMethod.GetAlbumDetail.id -> {
-                val request = TideRemoteMethod.GetAlbumDetail.decodeRequest(payload ?: "{}")
+            KelpRemoteMethod.GetAlbumDetail.id -> {
+                val request = KelpRemoteMethod.GetAlbumDetail.decodeRequest(payload ?: "{}")
                 handleAlbumDetail(request)
             }
 
-            TideRemoteMethod.GetPlaylistDetail.id -> {
-                val request = TideRemoteMethod.GetPlaylistDetail.decodeRequest(payload ?: "{}")
+            KelpRemoteMethod.GetPlaylistDetail.id -> {
+                val request = KelpRemoteMethod.GetPlaylistDetail.decodeRequest(payload ?: "{}")
                 handlePlaylistDetail(request)
             }
 
-            TideRemoteMethod.GetPlayback.id -> withPlayer { controller ->
+            KelpRemoteMethod.GetPlayback.id -> withPlayer { controller ->
                 LightResult.Success(
-                    TideRemoteMethod.GetPlayback.encodeResponse(controller.snapshot()),
+                    KelpRemoteMethod.GetPlayback.encodeResponse(controller.snapshot()),
                 )
             }
 
-            TideRemoteMethod.StartPlayback.id -> {
-                val request = TideRemoteMethod.StartPlayback.decodeRequest(payload ?: "{}")
+            KelpRemoteMethod.StartPlayback.id -> {
+                val request = KelpRemoteMethod.StartPlayback.decodeRequest(payload ?: "{}")
                 handleStartPlayback(request)
             }
 
-            TideRemoteMethod.ControlPlayback.id -> {
-                val request = TideRemoteMethod.ControlPlayback.decodeRequest(payload ?: "{}")
+            KelpRemoteMethod.ControlPlayback.id -> {
+                val request = KelpRemoteMethod.ControlPlayback.decodeRequest(payload ?: "{}")
                 handlePlayerCommand(request)
             }
 
             else -> failure(
-                TideErrorCategory.Protocol,
+                KelpErrorCategory.Protocol,
                 "Kelp does not support this server request.",
                 LightResult.ErrorCode.InvalidParameters,
             )
@@ -183,57 +183,57 @@ object TideServiceMethods {
             "Invalid Kelp RPC payload for method $methodId: ${error.message ?: error.javaClass.simpleName}",
         )
         failure(
-            TideErrorCategory.Protocol,
+            KelpErrorCategory.Protocol,
             "Kelp received an invalid request.",
             LightResult.ErrorCode.InvalidParameters,
         )
     } catch (error: Exception) {
         logger.severe("Kelp RPC failed for method $methodId: ${error.javaClass.simpleName}")
-        failure(TideErrorCategory.Unavailable, "The Kelp server could not complete the request.")
+        failure(KelpErrorCategory.Unavailable, "The Kelp server could not complete the request.")
     }
 
     private fun handleSearch(request: SearchRequest): LightResult<String> = handleCatalog(
         operation = { it.search(request.query.trim()) },
-        encode = TideRemoteMethod.Search::encodeResponse,
+        encode = KelpRemoteMethod.Search::encodeResponse,
     )
 
     private fun handleSearchPage(request: SearchPageRequest): LightResult<String> = handleCatalog(
         operation = { it.searchPage(request.query.trim(), request.section, request.cursor) },
-        encode = TideRemoteMethod.SearchPage::encodeResponse,
+        encode = KelpRemoteMethod.SearchPage::encodeResponse,
     )
 
     private fun handleArtistDetail(request: ArtistRequest): LightResult<String> = handleCatalog(
         operation = { it.artistDetail(request.artist) },
-        encode = TideRemoteMethod.GetArtistDetail::encodeResponse,
+        encode = KelpRemoteMethod.GetArtistDetail::encodeResponse,
     )
 
     private fun handleArtistReleases(request: ArtistReleasesRequest): LightResult<String> = handleCatalog(
         operation = { it.artistReleases(request.artist, request.section, request.cursor) },
-        encode = TideRemoteMethod.GetArtistReleases::encodeResponse,
+        encode = KelpRemoteMethod.GetArtistReleases::encodeResponse,
     )
 
     private fun handleArtistTracks(request: ArtistTracksRequest): LightResult<String> = handleCatalog(
         operation = { it.artistTracks(request.artist, request.cursor) },
-        encode = TideRemoteMethod.GetArtistTracks::encodeResponse,
+        encode = KelpRemoteMethod.GetArtistTracks::encodeResponse,
     )
 
     private fun handleAlbumDetail(request: AlbumRequest): LightResult<String> = handleCatalog(
         operation = { it.albumDetail(request.album) },
-        encode = TideRemoteMethod.GetAlbumDetail::encodeResponse,
+        encode = KelpRemoteMethod.GetAlbumDetail::encodeResponse,
     )
 
     private fun handlePlaylistDetail(request: PlaylistRequest): LightResult<String> = handleCatalog(
         operation = { it.playlistDetail(request.playlist) },
-        encode = TideRemoteMethod.GetPlaylistDetail::encodeResponse,
+        encode = KelpRemoteMethod.GetPlaylistDetail::encodeResponse,
     )
 
     private fun handleStartPlayback(request: StartPlaybackRequest): LightResult<String> =
         withPlayer { controller ->
             runCatching { controller.start(request) }.fold(
-                onSuccess = { LightResult.Success(TideRemoteMethod.StartPlayback.encodeResponse(it)) },
+                onSuccess = { LightResult.Success(KelpRemoteMethod.StartPlayback.encodeResponse(it)) },
                 onFailure = {
                     failure(
-                        TideErrorCategory.Protocol,
+                        KelpErrorCategory.Protocol,
                         "Choose a valid song to start playback.",
                         LightResult.ErrorCode.InvalidParameters,
                     )
@@ -248,25 +248,25 @@ object TideServiceMethods {
                     controller.control(request.command, request.positionMs)
                 }
             }
-            LightResult.Success(TideRemoteMethod.ControlPlayback.encodeResponse(snapshot))
+            LightResult.Success(KelpRemoteMethod.ControlPlayback.encodeResponse(snapshot))
         }
 
     private fun withPlayer(
-        block: (TidePlayerController) -> LightResult<String>,
+        block: (KelpPlayerController) -> LightResult<String>,
     ): LightResult<String> {
         val controller = currentPlayer() ?: return failure(
-            TideErrorCategory.Unavailable,
+            KelpErrorCategory.Unavailable,
             "The TIDAL player is not available yet.",
         )
         return try {
             block(controller)
         } catch (_: TimeoutCancellationException) {
-            failure(TideErrorCategory.Timeout, "The player took too long to respond. Please retry.")
+            failure(KelpErrorCategory.Timeout, "The player took too long to respond. Please retry.")
         } catch (error: TidalCatalogException) {
             failure(error.category, error.safeMessage)
         } catch (error: Exception) {
             logger.warning("TIDAL player request failed: ${error.javaClass.simpleName}")
-            failure(TideErrorCategory.Unavailable, "The TIDAL player could not complete that action.")
+            failure(KelpErrorCategory.Unavailable, "The TIDAL player could not complete that action.")
         }
     }
 
@@ -275,7 +275,7 @@ object TideServiceMethods {
         encode: (T) -> String,
     ): LightResult<String> {
         val cat = currentCatalog() ?: return failure(
-            TideErrorCategory.Unavailable,
+            KelpErrorCategory.Unavailable,
             "The TIDAL catalog is not available yet.",
         )
         return try {
@@ -287,12 +287,12 @@ object TideServiceMethods {
             LightResult.Success(encode(result))
         } catch (_: TimeoutCancellationException) {
             logger.log(Level.WARNING, "TIDAL catalog request timed out")
-            failure(TideErrorCategory.Timeout, "Loading from TIDAL timed out. Please retry.")
+            failure(KelpErrorCategory.Timeout, "Loading from TIDAL timed out. Please retry.")
         } catch (error: TidalCatalogException) {
             logger.warning(
                 "TIDAL catalog request failed: category=${error.category}, status=${error.statusCode ?: "none"}",
             )
-            val lightCode = if (error.category == TideErrorCategory.Authentication) {
+            val lightCode = if (error.category == KelpErrorCategory.Authentication) {
                 LightResult.ErrorCode.NoPermission
             } else {
                 LightResult.ErrorCode.Unknown
@@ -303,39 +303,39 @@ object TideServiceMethods {
                 "TIDAL catalog response could not be decoded: ${error.message ?: error.javaClass.simpleName}",
             )
             failure(
-                TideErrorCategory.Protocol,
+                KelpErrorCategory.Protocol,
                 "TIDAL returned an incompatible catalog response. Please retry.",
             )
         } catch (_: IOException) {
             logger.log(Level.WARNING, "TIDAL catalog network request failed")
-            failure(TideErrorCategory.Network, "Could not reach TIDAL. Check your connection and retry.")
+            failure(KelpErrorCategory.Network, "Could not reach TIDAL. Check your connection and retry.")
         }
     }
 
     private fun currentCatalog(): Catalog? {
         catalog?.let { return it }
-        val provider = TideRuntime.tidalAuth()?.credentialsProvider ?: return null
+        val provider = KelpRuntime.tidalAuth()?.credentialsProvider ?: return null
         return synchronized(catalogLock) {
             catalog ?: TidalCatalog(provider).also { catalog = it }
         }
     }
 
-    private fun currentPlayer(): TidePlayerController? {
+    private fun currentPlayer(): KelpPlayerController? {
         playerController?.let { return it }
         if (!::applicationContext.isInitialized) return null
-        val streamingAuth = TideRuntime.streamingAuth() ?: return null
+        val streamingAuth = KelpRuntime.streamingAuth() ?: return null
         return synchronized(catalogLock) {
-            playerController ?: TidePlayerController(applicationContext, streamingAuth) { track ->
+            playerController ?: KelpPlayerController(applicationContext, streamingAuth) { track ->
                 currentCatalog()?.similarTracks(track).orEmpty()
             }.also { playerController = it }
         }
     }
 
     private fun failure(
-        category: TideErrorCategory,
+        category: KelpErrorCategory,
         message: String,
         code: LightResult.ErrorCode = LightResult.ErrorCode.Unknown,
-    ): LightResult.Error = LightResult.Error(code, TideError(category, message).encode())
+    ): LightResult.Error = LightResult.Error(code, KelpError(category, message).encode())
 
     internal var collectionTimeoutMillis = 10_000L
         private set

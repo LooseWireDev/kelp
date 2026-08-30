@@ -13,7 +13,7 @@ import com.loosewire.kelp.protocol.ReleaseType
 import com.loosewire.kelp.protocol.SearchResults
 import com.loosewire.kelp.protocol.SearchSection
 import com.loosewire.kelp.protocol.TrackSummary
-import com.loosewire.kelp.protocol.TideErrorCategory
+import com.loosewire.kelp.protocol.KelpErrorCategory
 import com.tidal.sdk.auth.CredentialsProvider
 import com.tidal.sdk.tidalapi.generated.TidalApiClient
 import com.tidal.sdk.tidalapi.generated.apis.Artists.CollapseByArtistsIdRelationshipsTracksGet
@@ -341,37 +341,37 @@ class TidalCatalog(
     private fun <T> retrofit2.Response<T>.successBody(label: String): T {
         if (!isSuccessful) {
             val status = code()
-            if (status == 401) TideRuntime.authenticationFailed()
+            if (status == 401) KelpRuntime.authenticationFailed()
             throw when (status) {
                 401 -> TidalCatalogException(
-                    TideErrorCategory.Authentication,
+                    KelpErrorCategory.Authentication,
                     "Your TIDAL session expired. Please sign in again.",
                     status,
                 )
                 403 -> TidalCatalogException(
-                    TideErrorCategory.Authentication,
+                    KelpErrorCategory.Authentication,
                     "Kelp does not have permission to load $label.",
                     status,
                 )
                 400 -> TidalCatalogException(
-                    TideErrorCategory.Protocol,
+                    KelpErrorCategory.Protocol,
                     "TIDAL rejected the $label request.",
                     status,
                 )
                 429 -> TidalCatalogException(
-                    TideErrorCategory.Unavailable,
+                    KelpErrorCategory.Unavailable,
                     "TIDAL is receiving requests too quickly. Wait a moment and retry.",
                     status,
                 )
                 else -> TidalCatalogException(
-                    TideErrorCategory.Network,
+                    KelpErrorCategory.Network,
                     "TIDAL could not load $label. Please retry.",
                     status,
                 )
             }
         }
         return body() ?: throw TidalCatalogException(
-            TideErrorCategory.Protocol,
+            KelpErrorCategory.Protocol,
             "TIDAL returned invalid $label.",
             code(),
         )
@@ -797,7 +797,7 @@ interface Catalog {
 }
 
 class TidalCatalogException(
-    val category: TideErrorCategory,
+    val category: KelpErrorCategory,
     val safeMessage: String,
     val statusCode: Int? = null,
 ) : Exception(safeMessage)

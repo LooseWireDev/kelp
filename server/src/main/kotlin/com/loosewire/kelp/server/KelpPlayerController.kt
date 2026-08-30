@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
  */
 @UnstableApi
 @SuppressLint("UnsafeOptInUsageError")
-internal class TidePlayerController(
+internal class KelpPlayerController(
     context: Context,
     streamingAuth: TidalStreamingAuth,
     private val continuousLoader: suspend (TrackSummary) -> List<TrackSummary>,
@@ -49,7 +49,7 @@ internal class TidePlayerController(
     private val resolver = TidalStreamResolver(streamingAuth)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val logger = Logger.getLogger(TidePlayerController::class.java.name)
+    private val logger = Logger.getLogger(KelpPlayerController::class.java.name)
 
     @Volatile
     private var player: ExoPlayer? = null
