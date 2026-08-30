@@ -59,7 +59,20 @@ object KelpRuntime {
         }
     }
 
-    fun currentAuthSnapshot(): AuthSnapshot = synchronized(snapshotLock) { authSnapshot }
+    /**
+     * Report Authenticated only when BOTH sessions exist. If the developer-app
+     * (catalog) login succeeded but the first-party (playback) sign-in was
+     * interrupted, drop back to Unauthenticated so the SIGN IN row reappears;
+     * the chained login then skips straight to the playback step.
+     */
+    fun currentAuthSnapshot(): AuthSnapshot = synchronized(snapshotLock) {
+        if (authSnapshot.state == AuthState.Authenticated &&
+            streamingAuthInstance?.isAuthorized() != true
+        ) {
+            return@synchronized authSnapshot.copy(state = AuthState.Unauthenticated)
+        }
+        authSnapshot
+    }
 
     fun tidalAuth(): TidalAuth? = tidalAuth
 
