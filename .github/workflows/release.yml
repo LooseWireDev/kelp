@@ -1,0 +1,89 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout tide
+        uses: actions/checkout@v4
+        with:
+          path: tide
+
+      - name: Checkout companion light-sdk
+        uses: actions/checkout@v4
+        with:
+          repository: LooseWireDev/light-sdk
+          ref: codex/tide-official-sdk
+          path: light-sdk
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android packages
+        run: |
+          yes | sdkmanager --licenses > /dev/null
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Verify tag matches app version
+        run: |
+          version="$(awk -F'"' '/^versionName *=/ {print $2; exit}' tide/app/lighttool.toml)"
+          if [ "$GITHUB_REF_NAME" != "v${version}" ]; then
+            echo "tag $GITHUB_REF_NAME does not match versionName v$version in app/lighttool.toml"
+            exit 1
+          fi
+
+      - name: Decode signing key
+        run: echo "$TIDE_RELEASE_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/tide-release.jks"
+        env:
+          TIDE_RELEASE_KEYSTORE_B64: ${{ secrets.TIDE_RELEASE_KEYSTORE_B64 }}
+
+      - name: Build release APK
+        working-directory: tide
+        env:
+          TIDE_RELEASE_KEYSTORE: ${{ runner.temp }}/tide-release.jks
+          TIDE_RELEASE_STORE_PASSWORD: ${{ secrets.TIDE_RELEASE_STORE_PASSWORD }}
+          TIDE_RELEASE_KEY_ALIAS: ${{ secrets.TIDE_RELEASE_KEY_ALIAS }}
+          TIDE_RELEASE_KEY_PASSWORD: ${{ secrets.TIDE_RELEASE_KEY_PASSWORD }}
+        run: scripts/build-release.sh
+
+      - name: Signer digest + checksums + notes
+        run: |
+          apk="$(ls tide/dist/*.apk)"
+          certs="$("$ANDROID_HOME"/build-tools/36.0.0/apksigner verify --print-certs "$apk" 2>/dev/null \
+            | grep -E '^\s*Signer #1 certificate (SHA-256|SHA-1)')"
+          sha="$(sha256sum "$apk" | awk '{print $1}')"
+          echo "$sha" $(basename "$apk") > tide/dist/checksums.txt
+          {
+            echo "Install on a Light Phone III with adb: \`adb install $(basename "$apk")\`."
+            echo
+            echo "APK SHA-256: \`$sha\`"
+            echo
+            echo "Signer certificate SHA-256: \`$(echo "$certs" | awk -F': ' '/SHA-256/ {print $2}')\`"
+            echo
+            echo "Requires a paid TIDAL subscription and the two-step sign-in (catalog, then playback). See README for details."
+          } > tide/dist/release-notes.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          title: Tide ${{ github.ref_name }}
+          body_path: tide/dist/release-notes.txt
+          files: |
+            tide/dist/*.apk
+            tide/dist/checksums.txt
+          generate_release_notes: true

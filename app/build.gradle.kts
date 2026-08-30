@@ -20,7 +20,24 @@ android {
             enableV3Signing = true
             enableV4Signing = true
         }
+        // GitHub Releases are signed with a dedicated release key supplied via
+        // environment (keystore decoded from Actions secrets in CI).
+        if (!providers.environmentVariable("TIDE_RELEASE_KEYSTORE").getOrElse("").isBlank()) {
+            create("release") {
+                storeFile = file(providers.environmentVariable("TIDE_RELEASE_KEYSTORE").get())
+                storePassword = providers.environmentVariable("TIDE_RELEASE_STORE_PASSWORD").get()
+                keyAlias = providers.environmentVariable("TIDE_RELEASE_KEY_ALIAS")
+                    .getOrElse("tide-release")
+                keyPassword = providers.environmentVariable("TIDE_RELEASE_KEY_PASSWORD").get()
+                enableV3Signing = true
+                enableV4Signing = true
+            }
+        }
     }
+
+    val hasReleaseKey = !providers.environmentVariable("TIDE_RELEASE_KEYSTORE")
+        .getOrElse("")
+        .isBlank()
 
     defaultConfig {
         minSdk = 34
@@ -36,7 +53,11 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            signingConfig = signingConfigs.getByName("lightsdkDev")
+            signingConfig = if (hasReleaseKey) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("lightsdkDev")
+            }
         }
     }
 

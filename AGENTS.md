@@ -34,6 +34,12 @@ scripts/build-release.sh          # tests + minified release APK in dist/ (handl
 
 Verification for any change: the narrowest useful unit tests first (`:protocol:test`, `:app:testDebugUnitTest`, `:server:testDebugUnitTest`), then `:app:assembleDebug`; run `:app:assembleRelease` for anything touching server code (R8 path) — or just run `scripts/build-release.sh`. Install: `adb -s <serial> install -r app/build/outputs/apk/debug/app-debug.apk`; pick an explicit serial when devices are ambiguous.
 
+## CI / releases
+
+- `.github/workflows/build.yml`: tests + debug assemble on push/PR. CI checks out the companion `LooseWireDev/light-sdk` (branch `codex/tide-official-sdk`) next to the repo; locally that checkout must sit at `../light-sdk` (override with `-Ptide.sdkPath=...`).
+- `.github/workflows/release.yml`: tag-triggered (`v*`) signed release. Tag must match `versionName` in `app/lighttool.toml`; bump `versionCode` each release. Signing uses Actions secrets `TIDE_RELEASE_*`; the keystore backup lives at `~/.tide-keys/tide-release.jks` (storepass in `tide-release.storepass`, 600), outside the repo.
+- GitHub Release APKs are signed with the release key; dev-key-signed installs must be uninstalled first (signature mismatch on upgrade).
+
 Emulator/device work follows the `lightos-emulator` skill (never run system-partition commands on retail hardware; none are needed here).
 
 ## Commits & style

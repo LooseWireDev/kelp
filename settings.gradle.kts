@@ -25,7 +25,11 @@ include(":app")
 include(":protocol")
 include(":server")
 
-includeBuild("../light-sdk") {
+// Composite Light SDK checkout. Override with -Ptide.sdkPath=... when the SDK
+// lives elsewhere (e.g. CI), defaults to the adjacent checkout.
+val lightSdkPath = providers.gradleProperty("tide.sdkPath").getOrElse("../light-sdk")
+
+includeBuild(lightSdkPath) {
     dependencySubstitution {
         substitute(module("com.thelightphone:ui")).using(project(":sdk:ui"))
         substitute(module("com.thelightphone:client")).using(project(":sdk:client"))

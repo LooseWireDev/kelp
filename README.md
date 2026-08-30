@@ -80,12 +80,29 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 ## Release builds
 
+**Local:**
+
 ```bash
 scripts/build-release.sh          # tests + minified release APK into dist/
 scripts/build-release.sh --skip-tests
 ```
 
-The script runs the unit suites (`:protocol:test`, `:app:testDebugUnitTest`, `:server:testDebugUnitTest`), builds `:app:assembleRelease` (R8, signed with the shared light-sdk dev key), copies the APK to `dist/tide-v<versionName>-vc<versionCode>.apk`, and prints its SHA-256. Version is read from `app/lighttool.toml`. The script auto-detects JDK 17 and an Android SDK; override with `JAVA_HOME` / `ANDROID_HOME`.
+The script runs the unit suites (`:protocol:test`, `:app:testDebugUnitTest`, `:server:testDebugUnitTest`), builds `:app:assembleRelease` (R8), copies the APK to `dist/tide-v<versionName>-vc<versionCode>.apk`, and prints its SHA-256. Version is read from `app/lighttool.toml`. The script auto-detects JDK 17 and an Android SDK; override with `JAVA_HOME` / `ANDROID_HOME`. Without a release key in the environment, the APK is signed with the shared light-sdk dev key; set `TIDE_RELEASE_KEYSTORE`, `TIDE_RELEASE_STORE_PASSWORD`, `TIDE_RELEASE_KEY_ALIAS`, `TIDE_RELEASE_KEY_PASSWORD` to sign with the release key instead.
+
+**GitHub CI/CD** (`.github/workflows/`):
+
+- `build.yml` runs the tests + debug assemble on every push to `main` and on PRs.
+- `release.yml` runs when a `v*` tag is pushed: it verifies the tag matches `versionName` in `app/lighttool.toml`, builds with the release key from Actions secrets (`TIDE_RELEASE_*`), and publishes a GitHub Release with the APK, checksums, signer certificate digest, and install notes.
+
+Release procedure:
+
+```bash
+# 1. bump versionCode/versionName in app/lighttool.toml, commit
+# 2. tag and push
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+The upgrade path requires the install key to match: APKs signed with the light-sdk dev key (older local installs) must be uninstalled before installing a GitHub Release build.
 
 ## License
 Apache-2.0 (same as the surrounding LightOS codebase).
