@@ -1,108 +1,73 @@
-# Kelp – Light Phone III TIDAL client
+<p align="center">
+  <img src="docs/assets/icon.png" width="160" alt="Kelp">
+</p>
 
-A sideloadable Light Phone III tool for TIDAL, following the proven [phono](https://github.com/jonathancaudill/phono) playback recipe. Kelp uses the Light SDK for its application lifecycle, screens, navigation, UI, service connection, and audio capability. It supports TIDAL sign-in, catalog browsing (collection, playlists, mixes, search), and full-length streaming playback. A paid TIDAL subscription is required — Kelp, like phono, will never work around that.
+<h1 align="center">Kelp</h1>
 
-## Light SDK status
+<p align="center">
+  A small, e-ink-friendly TIDAL client for the Light Phone III.<br>
+  Full-length streaming, monochrome UI, no clutter.
+</p>
 
-Kelp's `:app` module follows the current Light tool scaffold:
+<p align="center">
+  <img src="docs/screenshots/home.png" width="260" alt="Home">
+  <img src="docs/screenshots/library.png" width="260" alt="Library">
+  <img src="docs/screenshots/player.png" width="260" alt="Now playing">
+</p>
 
-- applies `com.thelightphone.light-sdk` and the SDK's KSP processor;
-- declares identity, permissions, orientation, server package, and capabilities in `app/lighttool.toml` instead of a hand-written manifest;
-- uses `@InitialScreen`, `LightScreen`, `LightViewModel`, SDK navigation, and Light UI components;
-- treats restricted Android APIs as lint errors;
-- opts into the SDK-owned `detached-audio` capability for playback; and
-- builds against Java 17, Android API 36, and the adjacent SDK checkout based directly on official `lightphone/light-sdk` v0.1.1.
+## What is it?
 
-The current TIDAL integration is intentionally **sideload-only**. The official Light builder extracts one tool module and builds it against a pinned SDK; it ignores sibling modules. It also does not currently allowlist the official TIDAL Android SDK or provide a generic OAuth browser flow. Kelp therefore keeps TIDAL auth and API code in a runtime-only `:server` module and self-hosts the Light binder service inside the same APK. This works for local sideloading but is not eligible for Light's hosted build/signing pipeline in its present form.
+Kelp streams TIDAL the way you actually use it — your saved songs, albums, artists, playlists, daily mixes, and search — squeezed into a calm, text-first interface that fits a minimal phone. Under the hood it runs the Light SDK and plays real, full-length tracks through its own Media3/ExoPlayer pipeline, using the same proven technique as [phono](https://github.com/jonathancaudill/phono) and the other community clients (orpheusdl, streamrip).
 
-Do not describe the current APK as a hosted-builder-compatible community tool. Reaching that state requires an upstream Light SDK decision: allowlist the TIDAL SDK and add an SDK-safe OAuth flow, or provide equivalent TIDAL methods from LightOS.
+**You need a paid TIDAL subscription.** Like phono, kelp never works around that and never will.
 
-## Project structure
-- **:app** – Light SDK tool module. Light UI screens and `KelpClient`, the binder RPC client. The Light plugin derives the `com.loosewire.kelp` application ID and manifest from `lighttool.toml`. No TIDAL or server imports; communicates entirely over typed protocol methods.
-- **:server** – Unrestricted Android library merged into both debug and release APKs as a runtime-only dependency. Hosts `KelpRuntime` (TIDAL auth), `KelpServiceMethods` (RPC dispatch), the self-hosted `LightSdkServer`, and the OAuth `WebView` activity.
-- **:protocol** – Pure Kotlin/JVM module. Serializable contracts and domain models (`AuthSnapshot`, `ReleaseSummary`, `KelpRemoteMethod`) shared between app and server. No Android or TIDAL dependencies.
-- `:app`, `:protocol`, and `:server` consume the adjacent `../light-sdk` composite build.
+## Install
 
-## TIDAL configuration
-The SDK reads its public-client configuration from `local.properties` (which is **git‑ignored**). Kelp uses OAuth PKCE and does not embed a client secret:
-```
-tidal.clientid=<your client id>
-tidal.clientscopes=<space-separated scopes>
-tidal.clientredirecturi=kelp://auth
-```
-A `local.properties.example` file is included as a template.
+1. Grab the latest APK from [**Releases**](https://github.com/LooseWireDev/kelp/releases).
+2. Enable USB debugging on your LP3 (developer options), then:
+   ```bash
+   adb install kelp-v0.2.0-vc2.apk
+   ```
+3. Open Kelp and sign in. The login runs in two steps back-to-back with the same TIDAL account (one for the catalog, one for playback) — complete them both.
 
-## How playback works (two sign-ins)
+Kelp is **sideload-only** today. It can't go through Light's hosted tool builder, because the builder ignores companion modules and doesn't allowlist the TIDAL SDK — so the TIDAL code lives in a runtime-only server module inside the APK. If that ever changes upstream, this section changes first.
 
-Kelp keeps two TIDAL sessions, chained in one WebView login flow:
+## Features
 
-1. **Developer-app PKCE** (your `local.properties` credentials) via the official auth module — required by TIDAL's v2 Public API, which only accepts registered developer apps. All catalog calls use this.
-2. **First-party PKCE** with TIDAL's official Android client id — required for full-length playback. Stream entitlement is keyed on the OAuth client, and developer tokens only resolve 30-second previews, which was the previous ceiling. `TidalStreamingAuth` mirrors phono's own implementation (itself matching orpheusdl/python-tidal).
+- Saved songs, albums, artists, playlists (your whole collection, paginated)
+- Home mixes (daily / discovery / new-release) + recently played
+- Full catalog search with per-section paging
+- Queue with shuffle, repeat, seek, and "keep playing similar songs" continuous playback
+- LOSSLESS streaming by default (falls back to lower quality if needed)
+- Follows LightOS theming and hardware-button navigation
 
-Playback is owned end-to-end: `TidalStreamResolver` calls the private `tracks/{id}/playbackinfopostpaywall` endpoint (`assetpresentation=FULL`), decodes BTS progressive or sanitized clear-DASH manifests, and hands them to Media3 ExoPlayer. The official TIDAL Player module is not used. Stream quality starts at LOSSLESS and falls back HIGH → LOW.
+## Build it yourself
 
-**Keeping the first-party client id current:** TIDAL rotates these periodically. The working procedure (same as phono/orpheusdl): decompile the latest official `com.aspiro.tidal` APK (apktool/jadx), read `DefaultClearHiResV2ClientId` out of `assets/secrets.properties`, and update `TidalStreamingAuth.CLIENT_ID`. If playback suddenly returns 401s for everyone, this is the first thing to check.
-
-Sign out from **Settings → TIDAL** — it clears both sessions and WebView cookies, dropping back to the full chained login.
-
-## Build & install
-
-Prerequisites: JDK 17, Android SDK Platform 36, and the Light SDK checked out at `../light-sdk`. The SDK checkout should use the local `codex/kelp-official-sdk` branch, which is based directly on official v0.1.1 and contains only the small compatibility extensions Kelp needs for tool-owned RPCs, composite SDK dependencies, and its server-owned OAuth activity.
+You'll need JDK 17, an Android SDK (platform 36), and the companion Light SDK checkout at `../light-sdk` (branch `codex/kelp-official-sdk`, based on upstream v0.1.1 plus kelp's small compatibility patches):
 
 ```bash
-# From the kelp project root
-./gradlew :app:assembleDebug   # builds the APK
-# The resulting APK is at app/build/outputs/apk/debug/app-debug.apk
-```
-Install it with:
-
-```bash
+./gradlew :app:assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## Architecture notes
-- The tool's `lighttool.toml` points `serverPackage = "com.loosewire.kelp"`, so the sideload APK binds to its embedded service. A conventional LightOS-hosted tool would use `com.lightos` instead.
-- `:app` never touches `KelpRuntime` directly. It calls `KelpClient` (interface) backed by `BinderTideClient`, which serializes requests through `LightServiceConnection.callRemoteServiceMethod(...)` using `KelpRemoteMethod` IDs (e.g. `com.loosewire.kelp.auth.snapshot.v1`).
-- `:server` registers `KelpServiceMethods.dispatch` as `LightSdkServer.customServiceMethodResolver` in `KelpBootstrapProvider`, so custom Kelp methods are answered alongside built-in Light SDK methods.
-- `KelpRuntime` owns the singleton returned by `TidalAuth.getInstance(...)` (developer-app catalog session) plus `TidalStreamingAuth` (first-party playback session), and exposes `currentAuthSnapshot()` returning a protocol `AuthSnapshot`.
-- The login flow chains developer-app PKCE then first-party PKCE in one WebView; shared cookies usually carry the session into step two.
-- `KelpPlayerController` keeps queue/shuffle/repeat policy in Kelp and plays Media3 `ExoPlayer`; all player calls are marshaled to the main thread.
-- Missing credentials produce an in-app configuration message while still allowing a credential-free debug build.
-- The endpoint, scope, Home-feed, playback, offline, and attribution decisions are recorded in [`docs/TIDAL_ARCHITECTURE.md`](docs/TIDAL_ARCHITECTURE.md).
-
-## Dependencies
-- **TIDAL SDK**
-  - `com.tidal.sdk:auth:0.10.1`
-  - `com.tidal.sdk:tidalapi:0.3.53`
-- **Media3 1.5.0** (`media3-common`, `media3-exoplayer`, `media3-exoplayer-dash`), strict-pinned because the Light SDK brings a newer version.
-- **OkHttp 4.12.0** for first-party streaming auth + playbackinfo.
-- **JitPack** repository is added in the root `settings.gradle.kts` for any transitive dependencies.
-
-## Release builds
-
-**Local:**
+For release-quality builds (runs the tests, R8, signed, into `dist/`):
 
 ```bash
-scripts/build-release.sh          # tests + minified release APK into dist/
-scripts/build-release.sh --skip-tests
+scripts/build-release.sh
 ```
 
-The script runs the unit suites (`:protocol:test`, `:app:testDebugUnitTest`, `:server:testDebugUnitTest`), builds `:app:assembleRelease` (R8), copies the APK to `dist/kelp-v<versionName>-vc<versionCode>.apk`, and prints its SHA-256. Version is read from `app/lighttool.toml`. The script auto-detects JDK 17 and an Android SDK; override with `JAVA_HOME` / `ANDROID_HOME`. Without a release key in the environment, the APK is signed with the shared light-sdk dev key; set `TIDE_RELEASE_KEYSTORE`, `TIDE_RELEASE_STORE_PASSWORD`, `TIDE_RELEASE_KEY_ALIAS`, `TIDE_RELEASE_KEY_PASSWORD` to sign with the release key instead.
+You'll also want your own TIDAL developer credentials in `local.properties` (see `local.properties.example`) if you're hacking rather than installing releases.
 
-**GitHub CI/CD** (`.github/workflows/`):
+CI runs tests + assemble on every push; pushing a matching `v*` tag publishes a signed release automatically.
 
-- `build.yml` runs the tests + debug assemble on every push to `main` and on PRs.
-- `release.yml` runs when a `v*` tag is pushed: it verifies the tag matches `versionName` in `app/lighttool.toml`, builds with the release key from Actions secrets (`TIDE_RELEASE_*`), and publishes a GitHub Release with the APK, checksums, signer certificate digest, and install notes.
+## Legal / disclaimers
 
-Release procedure:
+Unofficial project, unaffiliated with TIDAL or Light. A paid TIDAL subscription is required for everything to work. If TIDAL rotates their first-party client id (you'll notice as playback suddenly failing), the fix procedure is documented in [docs/TIDAL_ARCHITECTURE.md](docs/TIDAL_ARCHITECTURE.md).
 
-```bash
-# 1. bump versionCode/versionName in app/lighttool.toml, commit
-# 2. tag and push
-git tag v0.2.0 && git push origin v0.2.0
-```
+## More reading
 
-The upgrade path requires the install key to match: APKs signed with the light-sdk dev key (older local installs) must be uninstalled before installing a GitHub Release build.
+- [docs/TIDAL_ARCHITECTURE.md](docs/TIDAL_ARCHITECTURE.md) — why the two-sign-in model exists, stream resolution, API map
+- [docs/PRODUCT.md](docs/PRODUCT.md) — product decisions
+- [AGENTS.md](AGENTS.md) — repo map and rules for working on the codebase
 
-## License
-Apache-2.0 (same as the surrounding LightOS codebase).
+Apache-2.0.
