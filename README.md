@@ -10,9 +10,10 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/home.png" width="260" alt="Home">
-  <img src="docs/screenshots/library.png" width="260" alt="Library">
-  <img src="docs/screenshots/player.png" width="260" alt="Now playing">
+  <img src="docs/screenshots/home.png" width="200" alt="Home">
+  <img src="docs/screenshots/library.png" width="200" alt="Library">
+  <img src="docs/screenshots/now-playing.png" width="200" alt="Now playing">
+  <img src="docs/screenshots/settings.png" width="200" alt="Settings">
 </p>
 
 ## What is it?
