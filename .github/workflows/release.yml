@@ -52,14 +52,49 @@ jobs:
         env:
           TIDE_RELEASE_KEYSTORE_B64: ${{ secrets.TIDE_RELEASE_KEYSTORE_B64 }}
 
+      - name: Verify TIDAL developer configuration
+        env:
+          TIDAL_CLIENT_ID: ${{ secrets.TIDAL_CLIENT_ID }}
+          TIDAL_CLIENT_SCOPES: ${{ secrets.TIDAL_CLIENT_SCOPES }}
+          TIDAL_CLIENT_REDIRECT_URI: ${{ secrets.TIDAL_CLIENT_REDIRECT_URI }}
+        run: |
+          if [ -z "$TIDAL_CLIENT_ID" ] || [ -z "$TIDAL_CLIENT_SCOPES" ] || [ -z "$TIDAL_CLIENT_REDIRECT_URI" ]; then
+            echo "Missing one or more TIDAL developer configuration secrets"
+            exit 1
+          fi
+
       - name: Build release APK
         working-directory: kelp
         env:
+          TIDAL_CLIENT_ID: ${{ secrets.TIDAL_CLIENT_ID }}
+          TIDAL_CLIENT_SCOPES: ${{ secrets.TIDAL_CLIENT_SCOPES }}
+          TIDAL_CLIENT_REDIRECT_URI: ${{ secrets.TIDAL_CLIENT_REDIRECT_URI }}
           TIDE_RELEASE_KEYSTORE: ${{ runner.temp }}/tide-release.jks
           TIDE_RELEASE_STORE_PASSWORD: ${{ secrets.TIDE_RELEASE_STORE_PASSWORD }}
           TIDE_RELEASE_KEY_ALIAS: ${{ secrets.TIDE_RELEASE_KEY_ALIAS }}
           TIDE_RELEASE_KEY_PASSWORD: ${{ secrets.TIDE_RELEASE_KEY_PASSWORD }}
         run: scripts/build-release.sh
+
+      - name: Verify release catalog configuration
+        env:
+          TIDAL_CLIENT_ID: ${{ secrets.TIDAL_CLIENT_ID }}
+          TIDAL_CLIENT_SCOPES: ${{ secrets.TIDAL_CLIENT_SCOPES }}
+          TIDAL_CLIENT_REDIRECT_URI: ${{ secrets.TIDAL_CLIENT_REDIRECT_URI }}
+        run: |
+          set -euo pipefail
+          umask 077
+          dex_blob="$RUNNER_TEMP/kelp-release.dex"
+          pattern_file="$RUNNER_TEMP/kelp-catalog-config.pattern"
+          trap 'rm -f "$dex_blob" "$pattern_file"' EXIT
+          unzip -p kelp/dist/*.apk 'classes*.dex' > "$dex_blob"
+          for variable in TIDAL_CLIENT_ID TIDAL_CLIENT_SCOPES TIDAL_CLIENT_REDIRECT_URI; do
+            printf '%s\n' "${!variable}" > "$pattern_file"
+            if ! grep -aFq -f "$pattern_file" "$dex_blob"; then
+              echo "Release APK is missing $variable"
+              exit 1
+            fi
+          done
+          echo "Release APK catalog configuration verified"
 
       - name: Signer digest + checksums + notes
         run: |

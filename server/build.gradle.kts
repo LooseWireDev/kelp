@@ -16,6 +16,15 @@ val localProperties = Properties().apply {
     }
 }
 
+fun catalogConfig(environmentName: String, propertyName: String): String =
+    providers.environmentVariable(environmentName).orNull
+        ?.takeIf(String::isNotBlank)
+        ?: localProperties.getProperty(propertyName, "")
+
+val tidalClientId = catalogConfig("TIDAL_CLIENT_ID", "tidal.clientid")
+val tidalClientScopes = catalogConfig("TIDAL_CLIENT_SCOPES", "tidal.clientscopes")
+val tidalClientRedirectUri = catalogConfig("TIDAL_CLIENT_REDIRECT_URI", "tidal.clientredirecturi")
+
 android {
     namespace = "com.loosewire.kelp.server"
     compileSdk = 36
@@ -26,17 +35,17 @@ android {
         buildConfigField(
             "String",
             "CLIENT_ID",
-            localProperties.getProperty("tidal.clientid", "").asBuildConfigString(),
+            tidalClientId.asBuildConfigString(),
         )
         buildConfigField(
             "String",
             "CLIENT_SCOPES",
-            localProperties.getProperty("tidal.clientscopes", "").asBuildConfigString(),
+            tidalClientScopes.asBuildConfigString(),
         )
         buildConfigField(
             "String",
             "REDIRECT_URI",
-            localProperties.getProperty("tidal.clientredirecturi", "kelp://auth").asBuildConfigString(),
+            tidalClientRedirectUri.asBuildConfigString(),
         )
     }
 
@@ -48,6 +57,27 @@ android {
     buildFeatures {
         buildConfig = true
     }
+}
+
+val validateReleaseCatalogConfig by tasks.registering {
+    group = "verification"
+    description = "Fails release builds that do not contain the TIDAL catalog configuration"
+    doLast {
+        val missing = buildList {
+            if (tidalClientId.isBlank()) add("TIDAL_CLIENT_ID or tidal.clientid")
+            if (tidalClientScopes.isBlank()) add("TIDAL_CLIENT_SCOPES or tidal.clientscopes")
+            if (tidalClientRedirectUri.isBlank()) {
+                add("TIDAL_CLIENT_REDIRECT_URI or tidal.clientredirecturi")
+            }
+        }
+        if (missing.isNotEmpty()) {
+            throw GradleException("Missing TIDAL catalog configuration: ${missing.joinToString()}")
+        }
+    }
+}
+
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    dependsOn(validateReleaseCatalogConfig)
 }
 
 kotlin {
