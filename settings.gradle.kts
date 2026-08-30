@@ -27,9 +27,9 @@ include(":server")
 
 includeBuild("../light-sdk") {
     dependencySubstitution {
-        substitute(module("com.thelightphone:sdk-ui")).using(project(":sdk:ui"))
-        substitute(module("com.thelightphone:sdk-client")).using(project(":sdk:client"))
-        substitute(module("com.thelightphone:sdk-server")).using(project(":sdk:server"))
-        substitute(module("com.thelightphone:sdk-shared")).using(project(":sdk:shared"))
+        substitute(module("com.thelightphone:ui")).using(project(":sdk:ui"))
+        substitute(module("com.thelightphone:client")).using(project(":sdk:client"))
+        substitute(module("com.thelightphone:server")).using(project(":sdk:server"))
+        substitute(module("com.thelightphone:shared")).using(project(":sdk:shared"))
     }
 }

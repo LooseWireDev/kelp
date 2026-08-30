@@ -11,7 +11,7 @@
         <!-- Bootstrap ContentProvider (non-exported) -->
         <provider
             android:name=".TideBootstrapProvider"
-            android:authorities="com.lightphone.tide.server.bootstrap"
+            android:authorities="com.loosewire.tide.server.bootstrap"
             android:exported="false" />
 
         <!-- Login activity (exported, explicit launch) -->

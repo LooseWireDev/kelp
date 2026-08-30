@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     id("com.android.library")
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 fun String.asBuildConfigString(): String =
@@ -16,7 +17,7 @@ val localProperties = Properties().apply {
 }
 
 android {
-    namespace = "com.lightphone.tide.server"
+    namespace = "com.loosewire.tide.server"
     compileSdk = 36
 
     defaultConfig {
@@ -26,11 +27,6 @@ android {
             "String",
             "CLIENT_ID",
             localProperties.getProperty("tidal.clientid", "").asBuildConfigString(),
-        )
-        buildConfigField(
-            "String",
-            "CLIENT_SECRET",
-            localProperties.getProperty("tidal.clientsecret", "").asBuildConfigString(),
         )
         buildConfigField(
             "String",
@@ -71,11 +67,22 @@ dependencies {
     implementation("com.tidal.sdk:auth:0.10.1") {
         exclude(group = "com.google.crypto.tink", module = "tink-android")
     }
-    implementation("com.tidal.sdk:player:0.0.71") {
-        exclude(group = "com.google.crypto.tink", module = "tink-android")
-    }
     implementation("com.tidal.sdk:tidalapi:0.3.53") {
         exclude(group = "com.google.crypto.tink", module = "tink-android")
+    }
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    // Playback runs through Tide's own first-party playbackinfo resolution +
+    // Media3 ExoPlayer (phono's recipe): the official TIDAL Player module only
+    // plays 30-second previews for unapproved developer apps.
+    listOf(
+        "media3-common",
+        "media3-exoplayer",
+        "media3-exoplayer-dash",
+    ).forEach { module ->
+        implementation("androidx.media3:$module") {
+            version { strictly("1.5.0") }
+            because("Match the Media3 1.5.0 runtime pinned by the app module")
+        }
     }
     testImplementation(libs.kotlin.test)
 }

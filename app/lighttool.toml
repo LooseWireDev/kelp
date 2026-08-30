@@ -1,8 +1,9 @@
 [tool]
-id = "com.lightphone.tide"
+id = "com.loosewire.tide"
 label = "Tide"
 versionCode = 1
 versionName = "0.1.0"
 permissions = ["android.permission.INTERNET"]
-serverPackage = "com.lightphone.tide"
+capabilities = ["detached-audio"]
+serverPackage = "com.loosewire.tide"
 orientation = "portrait"
