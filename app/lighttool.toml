@@ -1,9 +1,10 @@
 [tool]
-id = "com.loosewire.tide"
-label = "Tide"
-versionCode = 1
-versionName = "0.1.0"
+id = "com.loosewire.kelp"
+label = "Kelp"
+versionCode = 2
+versionName = "0.2.0"
 permissions = ["android.permission.INTERNET"]
 capabilities = ["detached-audio"]
-serverPackage = "com.loosewire.tide"
+serverPackage = "com.loosewire.kelp"
 orientation = "portrait"
+icon = "@mipmap/ic_launcher"

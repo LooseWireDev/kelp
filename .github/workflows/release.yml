@@ -10,16 +10,16 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout tide
+      - name: Checkout kelp
         uses: actions/checkout@v4
         with:
-          path: tide
+          path: kelp
 
       - name: Checkout companion light-sdk
         uses: actions/checkout@v4
         with:
           repository: LooseWireDev/light-sdk
-          ref: codex/tide-official-sdk
+          ref: codex/kelp-official-sdk
           path: light-sdk
 
       - name: Set up JDK 17
@@ -41,7 +41,7 @@ jobs:
 
       - name: Verify tag matches app version
         run: |
-          version="$(awk -F'"' '/^versionName *=/ {print $2; exit}' tide/app/lighttool.toml)"
+          version="$(awk -F'"' '/^versionName *=/ {print $2; exit}' kelp/app/lighttool.toml)"
           if [ "$GITHUB_REF_NAME" != "v${version}" ]; then
             echo "tag $GITHUB_REF_NAME does not match versionName v$version in app/lighttool.toml"
             exit 1
@@ -53,7 +53,7 @@ jobs:
           TIDE_RELEASE_KEYSTORE_B64: ${{ secrets.TIDE_RELEASE_KEYSTORE_B64 }}
 
       - name: Build release APK
-        working-directory: tide
+        working-directory: kelp
         env:
           TIDE_RELEASE_KEYSTORE: ${{ runner.temp }}/tide-release.jks
           TIDE_RELEASE_STORE_PASSWORD: ${{ secrets.TIDE_RELEASE_STORE_PASSWORD }}
@@ -63,11 +63,11 @@ jobs:
 
       - name: Signer digest + checksums + notes
         run: |
-          apk="$(ls tide/dist/*.apk)"
+          apk="$(ls kelp/dist/*.apk)"
           certs="$("$ANDROID_HOME"/build-tools/36.0.0/apksigner verify --print-certs "$apk" 2>/dev/null \
             | grep -E '^\s*Signer #1 certificate (SHA-256|SHA-1)')"
           sha="$(sha256sum "$apk" | awk '{print $1}')"
-          echo "$sha" $(basename "$apk") > tide/dist/checksums.txt
+          echo "$sha" $(basename "$apk") > kelp/dist/checksums.txt
           {
             echo "Install on a Light Phone III with adb: \`adb install $(basename "$apk")\`."
             echo
@@ -76,14 +76,14 @@ jobs:
             echo "Signer certificate SHA-256: \`$(echo "$certs" | awk -F': ' '/SHA-256/ {print $2}')\`"
             echo
             echo "Requires a paid TIDAL subscription and the two-step sign-in (catalog, then playback). See README for details."
-          } > tide/dist/release-notes.txt
+          } > kelp/dist/release-notes.txt
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Tide ${{ github.ref_name }}
-          body_path: tide/dist/release-notes.txt
+          name: Kelp ${{ github.ref_name }}
+          body_path: kelp/dist/release-notes.txt
           files: |
-            tide/dist/*.apk
-            tide/dist/checksums.txt
+            kelp/dist/*.apk
+            kelp/dist/checksums.txt
           generate_release_notes: true

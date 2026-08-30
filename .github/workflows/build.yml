@@ -9,16 +9,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout tide
+      - name: Checkout kelp
         uses: actions/checkout@v4
         with:
-          path: tide
+          path: kelp
 
       - name: Checkout companion light-sdk
         uses: actions/checkout@v4
         with:
           repository: LooseWireDev/light-sdk
-          ref: codex/tide-official-sdk
+          ref: codex/kelp-official-sdk
           path: light-sdk
 
       - name: Set up JDK 17
@@ -39,5 +39,5 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Unit tests + debug assemble
-        working-directory: tide
+        working-directory: kelp
         run: ./gradlew :protocol:test :app:testDebugUnitTest :server:testDebugUnitTest :app:assembleDebug

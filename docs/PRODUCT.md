@@ -1,13 +1,13 @@
-# Tide product direction
+# Kelp product direction
 
-Tide is a focused TIDAL player for Light Phone III. Its job is to help someone choose music, start listening, and put the phone away. It is not a miniature version of TIDAL's promotional home feed.
+Kelp is a focused TIDAL player for Light Phone III. Its job is to help someone choose music, start listening, and put the phone away. It is not a miniature version of TIDAL's promotional home feed.
 
 ## Design language
 
-- **Palette:** LightOS ink (`#000000`), paper (`#FFFFFF`), dark-theme secondary (`#BBBBBB`), and light-theme secondary (`#666666`). Tide follows the active LightOS theme and introduces no brand color.
+- **Palette:** LightOS ink (`#000000`), paper (`#FFFFFF`), dark-theme secondary (`#BBBBBB`), and light-theme secondary (`#666666`). Kelp follows the active LightOS theme and introduces no brand color.
 - **Type:** the Light SDK's system typeface and type scale. Titles identify music; superfine text identifies sections and playback state.
 - **Layout:** one reading column, generous tap rows, no cards, no album-art grid, and no hidden gestures.
-- **Icons:** only icons bundled with the Light SDK. Tide does not ship custom navigation glyphs.
+- **Icons:** only icons bundled with the Light SDK. Kelp does not ship custom navigation glyphs.
 - **Top bar:** no app or tab title on the main screen. The SDK waveform opens Queue at top-left; SDK Search and Settings icons sit together at top-right.
 
 ## Navigation
@@ -31,7 +31,7 @@ The Now Playing screen should prioritize:
 - previous, play/pause, and next;
 - shuffle, repeat, and queue as secondary actions;
 - a clear quality label when the stream is lossless or hi-res;
-- detached Light SDK audio so playback continues outside Tide.
+- detached Light SDK audio so playback continues outside Kelp.
 
 Album and playlist screens should put `PLAY` and `SHUFFLE` in the bottom action bar, followed by a numbered text track list. Artwork is optional context, never the primary navigation surface.
 

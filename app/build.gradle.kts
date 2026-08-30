@@ -87,7 +87,7 @@ dependencies {
     }
     implementation(libs.kotlinx.coroutines)
 
-    // Tide's own ExoPlayer-backed TIDAL playback pins Media3 1.5.0; strict,
+    // Kelp's own ExoPlayer-backed TIDAL playback pins Media3 1.5.0; strict,
     // allow-listed dependencies keep the merged APK on one Media3 runtime
     // even though Light SDK depends on a newer version.
     listOf(

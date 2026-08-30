@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build a release APK of Tide.
+# Build a release APK of Kelp.
 #
 # Runs the unit tests, builds :app:assembleRelease (minified with R8, signed
 # with the shared light-sdk dev key), and copies the artifact to dist/.
@@ -8,9 +8,9 @@
 # checked out at ../light-sdk.
 #
 # Toolchain resolution order:
-#   JDK 17:      $JAVA_HOME (if 17) -> sdkman -> /usr/lib/jvm -> /tmp/tide-jdk17
+#   JDK 17:      $JAVA_HOME (if 17) -> sdkman -> /usr/lib/jvm -> /tmp/kelp-jdk17
 #   Android SDK: $ANDROID_HOME -> sdk.dir in local.properties -> ~/Android/Sdk
-#                -> /tmp/tide-android-sdk
+#                -> /tmp/kelp-android-sdk
 #
 # Usage: scripts/build-release.sh [--skip-tests]
 set -euo pipefail
@@ -39,7 +39,7 @@ else
     for candidate in \
         "$HOME"/.sdkman/candidates/java/17* \
         /usr/lib/jvm/*17* \
-        /tmp/tide-jdk17; do
+        /tmp/kelp-jdk17; do
         if jdk_is_17 "$candidate"; then
             found="$candidate"
             break
@@ -65,7 +65,7 @@ detect_android_sdk() {
             return 0
         fi
     fi
-    for candidate in "$HOME/Android/Sdk" /tmp/tide-android-sdk; do
+    for candidate in "$HOME/Android/Sdk" /tmp/kelp-android-sdk; do
         if [ -d "$candidate/platforms" ]; then
             export ANDROID_HOME="$candidate"
             return
@@ -85,8 +85,8 @@ if [ ! -d ../light-sdk ]; then
 fi
 
 sdk_branch="$(git -C ../light-sdk branch --show-current 2>/dev/null || echo unknown)"
-if [ "$sdk_branch" != "codex/tide-official-sdk" ]; then
-    echo "warning: ../light-sdk is on '$sdk_branch' (expected 'codex/tide-official-sdk')" >&2
+if [ "$sdk_branch" != "codex/kelp-official-sdk" ]; then
+    echo "warning: ../light-sdk is on '$sdk_branch' (expected 'codex/kelp-official-sdk')" >&2
 fi
 
 # --- Version + artifact paths --------------------------------------------------------
@@ -97,7 +97,7 @@ if [ -z "$version_name" ] || [ -z "$version_code" ]; then
     echo "error: could not read versionName/versionCode from app/lighttool.toml" >&2
     exit 1
 fi
-artifact="tide-v${version_name}-vc${version_code}.apk"
+artifact="kelp-v${version_name}-vc${version_code}.apk"
 
 echo "==> environment"
 echo "    JAVA_HOME=$JAVA_HOME"

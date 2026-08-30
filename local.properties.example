@@ -2,4 +2,4 @@
 tidal.clientid=
 # Space-separated, matching the scopes selected in the TIDAL developer portal.
 tidal.clientscopes=
-tidal.clientredirecturi=tide://auth
+tidal.clientredirecturi=kelp://auth

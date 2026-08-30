@@ -19,7 +19,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "tide"
+rootProject.name = "kelp"
 
 include(":app")
 include(":protocol")
@@ -27,7 +27,7 @@ include(":server")
 
 // Composite Light SDK checkout. Override with -Ptide.sdkPath=... when the SDK
 // lives elsewhere (e.g. CI), defaults to the adjacent checkout.
-val lightSdkPath = providers.gradleProperty("tide.sdkPath").getOrElse("../light-sdk")
+val lightSdkPath = providers.gradleProperty("kelp.sdkPath").getOrElse("../light-sdk")
 
 includeBuild(lightSdkPath) {
     dependencySubstitution {

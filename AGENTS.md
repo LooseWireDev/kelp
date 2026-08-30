@@ -1,34 +1,34 @@
-# Tide – agent notes
+# Kelp – agent notes
 
-Light Phone III TIDAL client built on `lightphone/light-sdk` (composite build from `../light-sdk`, branch `codex/tide-official-sdk`, based on official v0.1.1). Kotlin + Compose throughout.
+Light Phone III TIDAL client built on `lightphone/light-sdk` (composite build from `../light-sdk`, branch `codex/kelp-official-sdk`, based on official v0.1.1). Kotlin + Compose throughout.
 
 ## Module map
 
 | Module | Kind | Owns | Key files |
 | --- | --- | --- | --- |
-| `:app` | Light SDK tool module | Light UI screens, `TideClient` binder RPC client | `app/src/main/kotlin/com/loosewire/tide/*.kt`, `app/lighttool.toml` |
-| `:protocol` | Pure Kotlin/JVM | Serializable RPC contracts + domain models (`TideRemoteMethod`, `AuthSnapshot`, `TrackSummary`, `PlaybackSnapshot`) | `protocol/src/main/kotlin/com/loosewire/tide/protocol/` |
-| `:server` | Unrestricted Android library, merged runtime-only into the APK | Everything TIDAL: catalog API, auth sessions, playback, RPC dispatch | `server/src/main/kotlin/com/loosewire/tide/server/` |
+| `:app` | Light SDK tool module | Light UI screens, `TideClient` binder RPC client | `app/src/main/kotlin/com/loosewire/kelp/*.kt`, `app/lighttool.toml` |
+| `:protocol` | Pure Kotlin/JVM | Serializable RPC contracts + domain models (`TideRemoteMethod`, `AuthSnapshot`, `TrackSummary`, `PlaybackSnapshot`) | `protocol/src/main/kotlin/com/loosewire/kelp/protocol/` |
+| `:server` | Unrestricted Android library, merged runtime-only into the APK | Everything TIDAL: catalog API, auth sessions, playback, RPC dispatch | `server/src/main/kotlin/com/loosewire/kelp/server/` |
 
 Distribution lane: **sideload-only, experimental/local.** Not eligible for Light's hosted builder (it ignores sibling modules and doesn't allowlist the TIDAL SDK). Never describe an APK as builder/distribution compatible — the hosted-builder compat story is documented in README "Light SDK status".
 
 ## Invariants — read before editing
 
-- **`:app` never imports TIDAL SDK, okhttp, Media3, or `:server` types.** Everything crosses the Light binder via `TideRemoteMethod` IDs (`com.loosewire.tide.*`). Add a feature by extending `:protocol` contracts, dispatch in `TideServiceMethods`, and a client method in `TideClient.kt`.
+- **`:app` never imports TIDAL SDK, okhttp, Media3, or `:server` types.** Everything crosses the Light binder via `TideRemoteMethod` IDs (`com.loosewire.kelp.*`). Add a feature by extending `:protocol` contracts, dispatch in `TideServiceMethods`, and a client method in `TideClient.kt`.
 - **`:protocol` stays Android/TIDAL-free.** Serializable models only, no platform imports.
 - **Two TIDAL sessions** (`TideRuntime`): developer-app auth3 login for the v2 Public API (catalog) + `TidalStreamingAuth` first-party PKCE for playback. Catalog endpoints only accept the developer token; full-length streams only resolve with the first-party token. Do not collapse them.
-- **Playback is Tide-owned**: `TidalStreamResolver` (private `playbackinfopostpaywall`, BTS/clear-DASH) + Media3 ExoPlayer in `TidePlayerController`. The official TIDAL Player SDK was removed on purpose — do not reintroduce it.
+- **Playback is Kelp-owned**: `TidalStreamResolver` (private `playbackinfopostpaywall`, BTS/clear-DASH) + Media3 ExoPlayer in `TidePlayerController`. The official TIDAL Player SDK was removed on purpose — do not reintroduce it.
 - **`TidePlayerController` threading**: queue state under `stateLock`; ExoPlayer calls only on the main thread via `onPlayer{}`; never call `onPlayer` (blocking post) while holding `stateLock`; playback liveness in `@Volatile` fields.
 - **Media3 is strict-pinned to 1.5.0** in both `app` and `server` (Light SDK resolves a newer version). Keep both pins in sync.
-- **`lighttool.toml` is the identity source** (app id, version, capabilities, `serverPackage = "com.loosewire.tide"`). Do not hand-write what the plugin generates.
+- **`lighttool.toml` is the identity source** (app id, version, capabilities, `serverPackage = "com.loosewire.kelp"`). Do not hand-write what the plugin generates.
 - **Secrets**: `local.properties` holds the developer-app client id and is git-ignored. Never embed it. The first-party client id in `TidalStreamingAuth` is intentionally embedded (public, shared with orpheusdl/phono; rotation procedure in `docs/TIDAL_ARCHITECTURE.md` and README).
 
 ## Building & verifying
 
-JDK 17 and an Android SDK (platform 36) are required; this machine may only have them at `/tmp/tide-jdk17` and `/tmp/tide-android-sdk`:
+JDK 17 and an Android SDK (platform 36) are required; this machine may only have them at `/tmp/kelp-jdk17` and `/tmp/kelp-android-sdk`:
 
 ```bash
-JAVA_HOME=/tmp/tide-jdk17 ANDROID_HOME=/tmp/tide-android-sdk ./gradlew :server:assembleDebug :app:assembleDebug
+JAVA_HOME=/tmp/kelp-jdk17 ANDROID_HOME=/tmp/kelp-android-sdk ./gradlew :server:assembleDebug :app:assembleDebug
 scripts/build-release.sh          # tests + minified release APK in dist/ (handles env detection)
 ```
 
@@ -36,7 +36,7 @@ Verification for any change: the narrowest useful unit tests first (`:protocol:t
 
 ## CI / releases
 
-- `.github/workflows/build.yml`: tests + debug assemble on push/PR. CI checks out the companion `LooseWireDev/light-sdk` (branch `codex/tide-official-sdk`) next to the repo; locally that checkout must sit at `../light-sdk` (override with `-Ptide.sdkPath=...`).
+- `.github/workflows/build.yml`: tests + debug assemble on push/PR. CI checks out the companion `LooseWireDev/light-sdk` (branch `codex/kelp-official-sdk`) next to the repo; locally that checkout must sit at `../light-sdk` (override with `-Ptide.sdkPath=...`).
 - `.github/workflows/release.yml`: tag-triggered (`v*`) signed release. Tag must match `versionName` in `app/lighttool.toml`; bump `versionCode` each release. Signing uses Actions secrets `TIDE_RELEASE_*`; the keystore backup lives at `~/.tide-keys/tide-release.jks` (storepass in `tide-release.storepass`, 600), outside the repo.
 - GitHub Release APKs are signed with the release key; dev-key-signed installs must be uninstalled first (signature mismatch on upgrade).
 

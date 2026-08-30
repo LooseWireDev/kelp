@@ -17,7 +17,7 @@ val localProperties = Properties().apply {
 }
 
 android {
-    namespace = "com.loosewire.tide.server"
+    namespace = "com.loosewire.kelp.server"
     compileSdk = 36
 
     defaultConfig {
@@ -36,7 +36,7 @@ android {
         buildConfigField(
             "String",
             "REDIRECT_URI",
-            localProperties.getProperty("tidal.clientredirecturi", "tide://auth").asBuildConfigString(),
+            localProperties.getProperty("tidal.clientredirecturi", "kelp://auth").asBuildConfigString(),
         )
     }
 
@@ -71,7 +71,7 @@ dependencies {
         exclude(group = "com.google.crypto.tink", module = "tink-android")
     }
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    // Playback runs through Tide's own first-party playbackinfo resolution +
+    // Playback runs through Kelp's own first-party playbackinfo resolution +
     // Media3 ExoPlayer (phono's recipe): the official TIDAL Player module only
     // plays 30-second previews for unapproved developer apps.
     listOf(

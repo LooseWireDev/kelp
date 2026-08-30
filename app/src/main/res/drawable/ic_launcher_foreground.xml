@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kelp launcher glyph: one flowing white kelp line on black (color comes
+     from the adaptive-icon background). All geometry stays inside the 66dp
+     safe circle of the 108dp adaptive-icon artboard. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="
+            M 54 82 C 50 72 58 62 54 50 C 50 40 56 34 54 26
+            M 53 74 C 46 72 39 68 34 62
+            M 55 70 C 62 68 69 63 74 57
+            M 56 62 C 48 59 42 55 37 49
+            M 55 54 C 62 52 68 47 73 41
+            M 53 46 C 46 43 41 39 37 34
+            M 47 85 Q 54 81 61 85
+            M 56.75 20.5 C 56.75 22 55.5 23.25 54 23.25 C 52.5 23.25 51.25 22 51.25 20.5 C 51.25 19 52.5 17.75 54 17.75 C 55.5 17.75 56.75 19 56.75 20.5 Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent" />
+</vector>
