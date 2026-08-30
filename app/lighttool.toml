@@ -7,4 +7,4 @@ permissions = ["android.permission.INTERNET"]
 capabilities = ["detached-audio"]
 serverPackage = "com.loosewire.kelp"
 orientation = "portrait"
-icon = "@mipmap/ic_launcher"
+icon = "@mipmap/ic_kelp_launcher"

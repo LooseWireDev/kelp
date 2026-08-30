@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Kelp launcher glyph: five heavy monoline fronds over a shared baseline,
+<!-- Kelp launcher glyph: five monoline fronds over a shared baseline,
      with a compact dash-dot-dash (Morse K) signature. Geometry stays inside
      the adaptive icon safe area and remains legible at launcher size. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -12,7 +12,7 @@
         android:pathData="M54,72 C54,61 57,56 57,48 C57,40 52,36 52,29 C52,27 53,25 54,24"
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="6"
+        android:strokeWidth="5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 
@@ -20,7 +20,7 @@
         android:pathData="M50,72 C45,67 46,59 43,53 C40,47 35,44 37,35"
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="6"
+        android:strokeWidth="5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 
@@ -28,7 +28,7 @@
         android:pathData="M58,72 C63,66 62,59 65,53 C68,47 73,44 71,36"
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="6"
+        android:strokeWidth="5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 
@@ -36,7 +36,7 @@
         android:pathData="M45,72 C40,67 38,62 33,59 C28,56 26,52 29,47"
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="6"
+        android:strokeWidth="5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 
@@ -44,7 +44,7 @@
         android:pathData="M63,72 C68,67 70,62 75,59 C80,56 82,51 79,46"
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="6"
+        android:strokeWidth="5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 
@@ -52,18 +52,18 @@
         android:pathData="M30,72 H78"
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="6"
+        android:strokeWidth="5"
         android:strokeLineCap="round" />
 
     <path
         android:pathData="M40,81 H45 M63,81 H68"
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="5"
+        android:strokeWidth="4.5"
         android:strokeLineCap="round" />
 
     <path
-        android:pathData="M54,81 m-2.5,0 a2.5,2.5 0,1 0,5 0 a2.5,2.5 0,1 0,-5 0"
+        android:pathData="M54,81 m-2.25,0 a2.25,2.25 0,1 0,4.5 0 a2.25,2.25 0,1 0,-4.5 0"
         android:fillColor="#FFFFFFFF" />
 
 </vector>
