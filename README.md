@@ -27,8 +27,9 @@ Kelp streams TIDAL the way you actually use it — your saved songs, albums, art
 1. Grab the latest APK from [**Releases**](https://github.com/LooseWireDev/kelp/releases).
 2. Enable USB debugging on your LP3 (developer options), then:
    ```bash
-   adb install kelp-v0.2.0-vc2.apk
+   adb install -r path/to/kelp-vX.Y.Z-vcN.apk
    ```
+   Keep `-r` when upgrading an existing Kelp install so Android replaces the app while preserving its data. A separate old Tide entry is not replaced because Tide used a different package ID.
 3. Open Kelp and sign in. The login runs in two steps back-to-back with the same TIDAL account (one for the catalog, one for playback) — complete them both.
 
 Kelp is **sideload-only** today. It can't go through Light's hosted tool builder, because the builder ignores companion modules and doesn't allowlist the TIDAL SDK — so the TIDAL code lives in a runtime-only server module inside the APK. If that ever changes upstream, this section changes first.

@@ -69,7 +69,7 @@ jobs:
           sha="$(sha256sum "$apk" | awk '{print $1}')"
           echo "$sha" $(basename "$apk") > kelp/dist/checksums.txt
           {
-            echo "Install on a Light Phone III with adb: \`adb install $(basename "$apk")\`."
+            echo "Install or upgrade on a Light Phone III with adb: \`adb install -r $(basename "$apk")\`."
             echo
             echo "APK SHA-256: \`$sha\`"
             echo
